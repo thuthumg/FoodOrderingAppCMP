@@ -23,6 +23,9 @@ val MARGIN_XXLARGE = 48.dp
 
 
 //App Specific
+val BOTTOM_NAVIGATION_ICON_SIZE = 25.dp
+val TOP_APP_BAR_ICON_SIZE = 25.dp
+val RESTAURANT_IMAGE_HEIGHT = 201.dp
 
 
 //Text

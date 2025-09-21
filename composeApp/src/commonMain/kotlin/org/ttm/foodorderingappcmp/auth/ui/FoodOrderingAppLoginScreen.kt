@@ -49,7 +49,7 @@ import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FoodOrderingAppLoginScreen() {
+fun FoodOrderingAppLoginScreen(onTapLogin: () -> Unit) {
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -136,11 +136,14 @@ fun FoodOrderingAppLoginScreen() {
 
             //Log in Button Section
             FoodOrderingAppButton(
-                onTapButton = {},
+                onTapButton = {
+                    onTapLogin()
+                },
                 modifier =
                     Modifier.padding(horizontal = MARGIN_MEDIUM_2, vertical = MARGIN_CARD_MEDIUM_2)
                         .fillMaxWidth().height(48.dp),
-                btnText = stringResource(Res.string.log_in)
+                btnText = stringResource(Res.string.log_in),
+                fontSize = TEXT_REGULAR_2X
             )
 
 
@@ -153,5 +156,5 @@ fun FoodOrderingAppLoginScreen() {
 @Preview
 @Composable
 fun FoodOrderingAppLoginScreenPreview() {
-    FoodOrderingAppLoginScreen()
+    FoodOrderingAppLoginScreen(onTapLogin = {})
 }

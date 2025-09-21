@@ -10,7 +10,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.ttm.foodorderingappcmp.auth.ui.FoodOrderingAppLoginScreen
 import org.ttm.foodorderingappcmp.auth.ui.FoodOrderingAppRegisterScreen
 import org.ttm.foodorderingappcmp.core.FoodOrderingAppTypography
-import org.ttm.foodorderingappcmp.home.ui.FoodOrderingAppHomeScreen
+import org.ttm.foodorderingappcmp.home_navigation.ui.HomeBottomNavigationScreen
 
 @Composable
 @Preview
@@ -27,7 +27,9 @@ fun App() {
             startDestination = NavRoutes.Register
         ){
             composable<NavRoutes.Login> {
-                FoodOrderingAppLoginScreen()
+                FoodOrderingAppLoginScreen(onTapLogin = {
+                    navController.navigate(NavRoutes.Home)
+                })
             }
 
             composable<NavRoutes.Register> {
@@ -39,7 +41,7 @@ fun App() {
             }
 
             composable<NavRoutes.Home> {
-                FoodOrderingAppHomeScreen()
+                HomeBottomNavigationScreen()
             }
         }
 

@@ -149,7 +149,8 @@ fun FoodOrderingAppRegisterScreen(onTapCreateAcc: () -> Unit) {
                     modifier =
                         Modifier.padding(horizontal = MARGIN_MEDIUM_2, vertical = MARGIN_CARD_MEDIUM_2)
                             .fillMaxWidth().height(48.dp),
-                    btnText = stringResource(Res.string.create_account)
+                    btnText = stringResource(Res.string.create_account),
+                    fontSize = TEXT_REGULAR_2X
                 )
 
 
