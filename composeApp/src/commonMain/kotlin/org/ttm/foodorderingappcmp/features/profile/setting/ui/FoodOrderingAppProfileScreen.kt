@@ -1,4 +1,4 @@
-package org.ttm.foodorderingappcmp.profile.ui
+package org.ttm.foodorderingappcmp.features.profile.setting.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize

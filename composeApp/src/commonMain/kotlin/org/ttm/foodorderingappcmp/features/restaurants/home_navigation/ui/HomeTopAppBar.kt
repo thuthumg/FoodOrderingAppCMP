@@ -1,4 +1,4 @@
-package org.ttm.foodorderingappcmp.home_navigation.ui
+package org.ttm.foodorderingappcmp.features.restaurants.home_navigation.ui
 
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
@@ -11,8 +11,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import foodorderingappcmp.composeapp.generated.resources.Res
+import foodorderingappcmp.composeapp.generated.resources.home_screen_title
 import foodorderingappcmp.composeapp.generated.resources.ic_shopping_card
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM
 import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
 import org.ttm.foodorderingappcmp.core.TEXT_LARGE
@@ -29,7 +31,7 @@ fun HomeTopAppBar() {
         ),
         title = {
             Text(
-                "Restaurants Near You...",
+                stringResource(Res.string.home_screen_title),
                 color = TITLE_BLACK_COLOR,
                 fontSize = TEXT_LARGE,
                 fontWeight = FontWeight.Bold

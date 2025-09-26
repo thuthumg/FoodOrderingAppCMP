@@ -111,7 +111,10 @@ fun FoodOrderingAppRegisterScreen(onTapCreateAcc: () -> Unit) {
                     isPasswordField = false,
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Next,
-                    onImeAction = { })
+                    onImeAction = { },
+                    modifier = Modifier
+                        .padding(horizontal = MARGIN_MEDIUM_2)
+                        .fillMaxWidth())
 
 
                 //Email input section
@@ -124,7 +127,10 @@ fun FoodOrderingAppRegisterScreen(onTapCreateAcc: () -> Unit) {
                     isPasswordField = false,
                     keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Next,
-                    onImeAction = { })
+                    onImeAction = { },
+                    modifier = Modifier
+                        .padding(horizontal = MARGIN_MEDIUM_2)
+                        .fillMaxWidth())
 
                 //Password input section
                 FoodOrderingAppOutlineTxtField(
@@ -138,7 +144,10 @@ fun FoodOrderingAppRegisterScreen(onTapCreateAcc: () -> Unit) {
                     isPasswordField = true,
                     keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Done,
-                    onImeAction = { }
+                    onImeAction = { },
+                    modifier = Modifier
+                        .padding(horizontal = MARGIN_MEDIUM_2)
+                        .fillMaxWidth()
                 )
 
                 //Create Account Button Section

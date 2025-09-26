@@ -107,7 +107,10 @@ fun FoodOrderingAppLoginScreen(onTapLogin: () -> Unit) {
                 isPasswordField = false,
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next,
-                onImeAction = { })
+                onImeAction = { },
+                modifier = Modifier
+                    .padding(horizontal = MARGIN_MEDIUM_2)
+                    .fillMaxWidth())
 
             //Password input section
             FoodOrderingAppOutlineTxtField(
@@ -121,7 +124,10 @@ fun FoodOrderingAppLoginScreen(onTapLogin: () -> Unit) {
                 isPasswordField = true,
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Done,
-                onImeAction = { }
+                onImeAction = { },
+                modifier = Modifier
+                    .padding(horizontal = MARGIN_MEDIUM_2)
+                    .fillMaxWidth()
             )
 
             //forgot password section

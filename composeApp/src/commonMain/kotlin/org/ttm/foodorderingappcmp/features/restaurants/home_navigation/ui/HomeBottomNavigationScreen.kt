@@ -1,4 +1,4 @@
-package org.ttm.foodorderingappcmp.home_navigation.ui
+package org.ttm.foodorderingappcmp.features.restaurants.home_navigation.ui
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -28,13 +28,13 @@ import org.ttm.foodorderingappcmp.core.OUTLINE_TXT_FIELD_TXT_COLOR
 import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
 import org.ttm.foodorderingappcmp.core.TEXT_SMALL
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
-import org.ttm.foodorderingappcmp.home.ui.FoodOrderingAppHomeScreen
-import org.ttm.foodorderingappcmp.orders.ui.FoodOrderingAppOrdersScreen
-import org.ttm.foodorderingappcmp.profile.ui.FoodOrderingAppProfileScreen
+import org.ttm.foodorderingappcmp.features.restaurants.home.ui.FoodOrderingAppHomeScreen
+import org.ttm.foodorderingappcmp.features.orders.order_list.ui.FoodOrderingAppOrdersScreen
+import org.ttm.foodorderingappcmp.features.profile.setting.ui.FoodOrderingAppProfileScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeBottomNavigationScreen() {
+fun HomeBottomNavigationScreen(onTapOrder: (Int)-> Unit) {
 
     val bottomNavigationItems = listOf(
         BottomNavigationItemData(name = "Home", icon = painterResource(Res.drawable.ic_home)),
@@ -85,7 +85,8 @@ fun HomeBottomNavigationScreen() {
         },
     ) { innerPadding ->
        when(selectedItem){
-           "Home" -> FoodOrderingAppHomeScreen(modifier = Modifier.padding(innerPadding))
+           "Home" -> FoodOrderingAppHomeScreen(modifier = Modifier.padding(innerPadding),
+               onTapOrder = {restaurantId -> onTapOrder(restaurantId)})
            "Orders" -> FoodOrderingAppOrdersScreen(modifier = Modifier.padding(innerPadding))
            "Profile" -> FoodOrderingAppProfileScreen(modifier = Modifier.padding(innerPadding))
        }
@@ -102,5 +103,5 @@ data class BottomNavigationItemData(
 @Preview
 @Composable
 fun HomeBottomNavigationScreenPreview() {
-    HomeBottomNavigationScreen()
+    HomeBottomNavigationScreen(onTapOrder = {})
 }

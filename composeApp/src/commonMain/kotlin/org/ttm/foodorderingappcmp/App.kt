@@ -9,8 +9,11 @@ import kotlinx.serialization.Serializable
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.ttm.foodorderingappcmp.auth.ui.FoodOrderingAppLoginScreen
 import org.ttm.foodorderingappcmp.auth.ui.FoodOrderingAppRegisterScreen
+import org.ttm.foodorderingappcmp.features.orders.cart.ui.CartScreen
 import org.ttm.foodorderingappcmp.core.FoodOrderingAppTypography
-import org.ttm.foodorderingappcmp.home_navigation.ui.HomeBottomNavigationScreen
+import org.ttm.foodorderingappcmp.features.orders.checkout.CheckoutScreen
+import org.ttm.foodorderingappcmp.features.restaurants.home_navigation.ui.HomeBottomNavigationScreen
+import org.ttm.foodorderingappcmp.features.restaurants.detail.ui.RestaurantDetailScreen
 
 @Composable
 @Preview
@@ -41,7 +44,42 @@ fun App() {
             }
 
             composable<NavRoutes.Home> {
-                HomeBottomNavigationScreen()
+                HomeBottomNavigationScreen(
+                    onTapOrder = {
+                        restaurantId ->
+                        navController.navigate(NavRoutes.RestaurantDetail)
+                    }
+                )
+            }
+
+            composable<NavRoutes.RestaurantDetail> {
+                RestaurantDetailScreen(
+                    onTapBack = {
+                        navController.navigateUp()
+                    },
+                    onTapViewMyCart = {
+                        navController.navigate(NavRoutes.Cart)
+                    }
+                )
+            }
+
+            composable<NavRoutes.Cart>{
+                CartScreen (
+                    onTapBack = {
+                        navController.navigateUp()
+                    },
+                    onTapPlaceOrder = {
+                        navController.navigate(NavRoutes.Checkout)
+                    }
+                )
+            }
+
+            composable<NavRoutes.Checkout>{
+                CheckoutScreen(
+                    onTapBack = {
+                        navController.navigateUp()
+                    },
+                    onTapPlaceOrder = {})
             }
         }
 
@@ -59,4 +97,13 @@ sealed class NavRoutes{
 
     @Serializable
     object Home
+
+    @Serializable
+    object RestaurantDetail
+
+    @Serializable
+    object Cart
+
+    @Serializable
+    object Checkout
 }

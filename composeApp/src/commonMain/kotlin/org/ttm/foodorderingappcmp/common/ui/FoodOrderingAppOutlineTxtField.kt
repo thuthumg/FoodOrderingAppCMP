@@ -1,8 +1,6 @@
 package org.ttm.foodorderingappcmp.common.ui
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -28,7 +26,6 @@ import foodorderingappcmp.composeapp.generated.resources.hide
 import foodorderingappcmp.composeapp.generated.resources.show
 import org.jetbrains.compose.resources.painterResource
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM
-import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM_2
 import org.ttm.foodorderingappcmp.core.OUTLINE_TXT_FIELD_BG_COLOR
 import org.ttm.foodorderingappcmp.core.OUTLINE_TXT_FIELD_TXT_COLOR
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
@@ -40,12 +37,19 @@ fun FoodOrderingAppOutlineTxtField(
     onValueChange: (String) -> Unit,
     txt: String,
     isPasswordField: Boolean,
-    modifier: Modifier = Modifier,
+    modifier: Modifier,
     keyboardType: KeyboardType = if (isPasswordField) KeyboardType.Password else KeyboardType.Text,
     imeAction: ImeAction = ImeAction.Done,
     onImeAction: () -> Unit = {},
+    isMultiline: Boolean = false,
+    minLines: Int = 1,
+    maxLines: Int = 1,
 ) {
     var isPasswordShown by remember { mutableStateOf(false) }
+
+    val actualSingleLine = !isMultiline
+    val actualMinLines = if (isMultiline) maxOf(2, minLines) else 1
+    val actualMaxLines = if (isMultiline) maxOf(actualMinLines, maxLines) else 1
 
     OutlinedTextField(
         value = value,
@@ -65,9 +69,7 @@ fun FoodOrderingAppOutlineTxtField(
             unfocusedTextColor = OUTLINE_TXT_FIELD_TXT_COLOR,
         ),
         shape = RoundedCornerShape(MARGIN_MEDIUM),
-        modifier = modifier
-            .padding(horizontal = MARGIN_MEDIUM_2)
-            .fillMaxWidth(),
+        modifier = modifier,
         visualTransformation = if (isPasswordField && !isPasswordShown) {
             PasswordVisualTransformation()
         } else {
@@ -98,6 +100,8 @@ fun FoodOrderingAppOutlineTxtField(
             onNext = { onImeAction() },
             onPrevious = { onImeAction() }
         ),
-        singleLine = true
+        singleLine = actualSingleLine,
+        minLines = actualMinLines,
+        maxLines = actualMaxLines
     )
 }

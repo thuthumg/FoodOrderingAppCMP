@@ -1,4 +1,4 @@
-package org.ttm.foodorderingappcmp.home.ui
+package org.ttm.foodorderingappcmp.features.restaurants.home.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -17,10 +17,8 @@ import org.ttm.foodorderingappcmp.core.MARGIN_CARD_MEDIUM_2
 import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
 
 @Composable
-fun FoodOrderingAppHomeScreen(modifier: Modifier) {
-//    Scaffold(containerColor = SCREEN_BG_COLOR) { innerPadding ->
-//
-//    }
+fun FoodOrderingAppHomeScreen(modifier: Modifier,onTapOrder : (Int) -> Unit) {
+
     val restaurantList = listOf(
         RestaurantItem(
             image = painterResource(Res.drawable.pizza_palace),
@@ -103,7 +101,12 @@ fun FoodOrderingAppHomeScreen(modifier: Modifier) {
         verticalArrangement = Arrangement.spacedBy(MARGIN_CARD_MEDIUM_2)
     ){
         items(restaurantList.size){
-            RestaurantItemSection(restaurantList = restaurantList, index = it)
+            RestaurantItemSection(restaurantList = restaurantList,
+                index = it,
+                onTapOrder = { restaurantId ->
+                    onTapOrder(restaurantId)
+
+                })
         }
     }
 
@@ -114,5 +117,5 @@ fun FoodOrderingAppHomeScreen(modifier: Modifier) {
 @Preview
 @Composable
 fun FoodOrderingAppHomeScreenPreview() {
-    FoodOrderingAppHomeScreen(modifier = Modifier)
+    FoodOrderingAppHomeScreen(modifier = Modifier, onTapOrder = {})
 }
