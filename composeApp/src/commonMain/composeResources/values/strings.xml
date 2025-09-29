@@ -31,10 +31,51 @@
     <string name="save_for_future_use">Save for future use</string>
 
 
+    <string name="review_order">Review Order</string>
+    <string name="order_summary">Order Summary</string>
+    <string name="payment_method">Payment Method</string>
+    <string name="order_total">Order Total</string>
+    <string name="confirm_order">Confirm Order</string>
+
+    <string name="order_confirmed">Order Confirmed</string>
+    <string name="your_order_is_confirmed">Your order is confirmed!</string>
+    <string name="confirm">Confirm</string>
+    <string name="order_confirm_desc">Your order will be delivered in 30-45 minutes. You can track your order in the Orders tab.</string>
+
+    <string name="orders">Orders</string>
+    <string name="sign_up">Sign Up</string>
+    <string name="dont_have_an_account">Don’t have an account?</string>
 
 
 
+    <string name="forgot_password_title">Forgot Password</string>
+    <string name="forgot_password_txt">Forgot your password?</string>
+    <string name="forgot_password_desc">Enter the email address associated with your account, and we'll send you a link to reset your password.</string>
+    <string name="continue_txt">Continue</string>
 
+    <string name="reset_password">Reset Password</string>
+    <string name="reset_password_desc">Please enter your new password.</string>
+    <string name="confirm_password">Confirm Password</string>
+
+
+    <string name="profile">Profile</string>
+    <string name="edit_profile">Edit Profile</string>
+    <string name="change_password">Change Password</string>
+    <string name="payment_methods">Payment Methods</string>
+    <string name="notifications">Notifications</string>
+    <string name="settings">Settings</string>
+    <string name="about">About</string>
+    <string name="logout">Logout</string>
+
+
+    <string name="our_mission">Our Mission</string>
+    <string name="company_info">Company Information</string>
+    <string name="company_name">Company Name</string>
+    <string name="founded">Founded</string>
+    <string name="headquarters">Headquarters</string>
+    <string name="contact_as">Contact Us</string>
+    <string name="customer_support">Customer Support</string>
+    <string name="business_inquiries">Business Inquiries</string>
 
 
 </resources>

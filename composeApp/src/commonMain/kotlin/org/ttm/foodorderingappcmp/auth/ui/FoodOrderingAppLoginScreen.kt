@@ -1,6 +1,6 @@
 package org.ttm.foodorderingappcmp.auth.ui
 
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,11 +27,13 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import foodorderingappcmp.composeapp.generated.resources.Res
+import foodorderingappcmp.composeapp.generated.resources.dont_have_an_account
 import foodorderingappcmp.composeapp.generated.resources.email
 import foodorderingappcmp.composeapp.generated.resources.forgot_password
 import foodorderingappcmp.composeapp.generated.resources.ic_info
 import foodorderingappcmp.composeapp.generated.resources.log_in
 import foodorderingappcmp.composeapp.generated.resources.password
+import foodorderingappcmp.composeapp.generated.resources.sign_up
 import foodorderingappcmp.composeapp.generated.resources.welcome_back
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -39,6 +41,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppButton
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppOutlineTxtField
 import org.ttm.foodorderingappcmp.core.MARGIN_CARD_MEDIUM_2
+import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM_2
 import org.ttm.foodorderingappcmp.core.MARGIN_XLARGE
 import org.ttm.foodorderingappcmp.core.OUTLINE_TXT_FIELD_TXT_COLOR
@@ -49,7 +52,7 @@ import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FoodOrderingAppLoginScreen(onTapLogin: () -> Unit) {
+fun FoodOrderingAppLoginScreen(onTapLogin: () -> Unit,onTapSignUp: ()-> Unit,onTapForgotPassword: () -> Unit) {
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -80,11 +83,12 @@ fun FoodOrderingAppLoginScreen(onTapLogin: () -> Unit) {
                     )
                 }
             )
-        }) { innerPadding ->
+        }
+        ) { innerPadding ->
         Column(
             modifier = Modifier
                 .padding(innerPadding).fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(MARGIN_MEDIUM_2)
+           // verticalArrangement = Arrangement.spacedBy(MARGIN_MEDIUM_2)
         ) {
 
             //title section
@@ -109,7 +113,7 @@ fun FoodOrderingAppLoginScreen(onTapLogin: () -> Unit) {
                 imeAction = ImeAction.Next,
                 onImeAction = { },
                 modifier = Modifier
-                    .padding(horizontal = MARGIN_MEDIUM_2)
+                    .padding(horizontal = MARGIN_MEDIUM_2, vertical = MARGIN_MEDIUM_2)
                     .fillMaxWidth())
 
             //Password input section
@@ -126,7 +130,7 @@ fun FoodOrderingAppLoginScreen(onTapLogin: () -> Unit) {
                 imeAction = ImeAction.Done,
                 onImeAction = { },
                 modifier = Modifier
-                    .padding(horizontal = MARGIN_MEDIUM_2)
+                    .padding(horizontal = MARGIN_MEDIUM_2, vertical = MARGIN_MEDIUM)
                     .fillMaxWidth()
             )
 
@@ -135,8 +139,10 @@ fun FoodOrderingAppLoginScreen(onTapLogin: () -> Unit) {
                 stringResource(Res.string.forgot_password),
                 fontSize = TEXT_REGULAR_2X,
                 color = OUTLINE_TXT_FIELD_TXT_COLOR,
-                modifier = Modifier.padding(top = MARGIN_CARD_MEDIUM_2)
-                    .align(Alignment.CenterHorizontally)
+                modifier = Modifier.padding(horizontal = MARGIN_MEDIUM_2, vertical = MARGIN_MEDIUM)
+                    .align(Alignment.End).clickable{
+                        onTapForgotPassword()
+                    }
             )
 
 
@@ -153,6 +159,29 @@ fun FoodOrderingAppLoginScreen(onTapLogin: () -> Unit) {
             )
 
 
+            //Don't have an account section
+            Text(
+                stringResource(Res.string.dont_have_an_account),
+                fontSize = TEXT_REGULAR_2X,
+                color = TITLE_BLACK_COLOR,
+                modifier = Modifier.padding(top = MARGIN_MEDIUM_2)
+                    .align(Alignment.CenterHorizontally)
+            )
+
+            //Sign Up
+            Text(
+                stringResource(Res.string.sign_up),
+                fontSize = TEXT_REGULAR_2X,
+                color = OUTLINE_TXT_FIELD_TXT_COLOR,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = MARGIN_MEDIUM)
+                    .align(Alignment.CenterHorizontally)
+                    .clickable{
+                        onTapSignUp()
+                    }
+            )
+
+
         }
     }
 
@@ -162,5 +191,5 @@ fun FoodOrderingAppLoginScreen(onTapLogin: () -> Unit) {
 @Preview
 @Composable
 fun FoodOrderingAppLoginScreenPreview() {
-    FoodOrderingAppLoginScreen(onTapLogin = {})
+    FoodOrderingAppLoginScreen(onTapLogin = {}, onTapSignUp = {}, onTapForgotPassword = {})
 }

@@ -1,34 +1,27 @@
-package org.ttm.foodorderingappcmp.features.orders.cart.ui
+package org.ttm.foodorderingappcmp.features.orders.order_review
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
 import foodorderingappcmp.composeapp.generated.resources.Res
 import foodorderingappcmp.composeapp.generated.resources.spicy_chicken_sandwich
 import org.jetbrains.compose.resources.painterResource
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM_2
-import org.ttm.foodorderingappcmp.core.TEXT_LARGE
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_2X
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
-
+import org.ttm.foodorderingappcmp.features.orders.cart.ui.SelectedFoodItemImageSection
+import org.ttm.foodorderingappcmp.features.orders.cart.ui.SelectedFoodItemNameSection
+import org.ttm.foodorderingappcmp.features.orders.cart.ui.SelectedItemPriceSection
 
 @Composable
-fun CartItemRow(itemQty: Int,
-                        onClickQtyAction: (Int) -> Unit) {
+fun OrderItemRow() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -53,12 +46,11 @@ fun CartItemRow(itemQty: Int,
                 itemName = "Spicy Chicken Sandwich"
             )
 
-            QuantitySelector(
-                itemQty = itemQty,
-                onClickQtyAction = { it ->
-                    onClickQtyAction(it)
-
-                })
+            Text(
+                "1x",
+                color = TITLE_BLACK_COLOR,
+                fontSize = TEXT_REGULAR_2X,
+            )
 
         }
 
@@ -70,37 +62,3 @@ fun CartItemRow(itemQty: Int,
     }
 }
 
-
-@Composable
-fun SelectedItemPriceSection(itemPrice: String) {
-    Text(
-        itemPrice,
-        color = TITLE_BLACK_COLOR,
-        fontSize = TEXT_REGULAR_2X,
-    )
-}
-
-
-@Composable
-fun SelectedFoodItemNameSection(itemName: String) {
-    Text(
-        itemName,
-        color = TITLE_BLACK_COLOR,
-        fontSize = TEXT_REGULAR_2X,
-        lineHeight = TEXT_LARGE
-    )
-}
-
-@Composable
-fun SelectedFoodItemImageSection(
-    itemImage: Painter,
-) {
-    Image(
-        itemImage,
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
-        modifier = Modifier.size(56.dp).clip(
-            RoundedCornerShape(MARGIN_MEDIUM)
-        )
-    )
-}

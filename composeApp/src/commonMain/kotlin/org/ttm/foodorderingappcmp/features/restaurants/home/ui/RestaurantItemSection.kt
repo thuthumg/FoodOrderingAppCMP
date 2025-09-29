@@ -20,10 +20,10 @@ import foodorderingappcmp.composeapp.generated.resources.Res
 import foodorderingappcmp.composeapp.generated.resources.order
 import org.jetbrains.compose.resources.stringResource
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppButton
+import org.ttm.foodorderingappcmp.core.MARGIN_40
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM_2
 import org.ttm.foodorderingappcmp.core.MARGIN_SMALL
-import org.ttm.foodorderingappcmp.core.MARGIN_XLARGE
 import org.ttm.foodorderingappcmp.core.OUTLINE_TXT_FIELD_TXT_COLOR
 import org.ttm.foodorderingappcmp.core.RESTAURANT_IMAGE_HEIGHT
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR
@@ -46,42 +46,40 @@ fun RestaurantItemSection(
         //Restaurant Image
         RestaurantImage(restaurantList, index)
 
-        //Restaurant Name
-        RestaurantName(restaurantList, index)
-
-        //Meal categories / Cuisine type
-        MealCategoriesOrCuisineType(restaurantList, index)
-
-        // Review
-        ReviewAndOrderSection(restaurantList, index, onTapOrder)
-    }
-}
-
-@Composable
-private fun ReviewAndOrderSection(
-    restaurantList: List<RestaurantItem>,
-    index: Int,
-    onTapOrder: (Int) -> Unit,
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        //ReviewText
-        Text(
-            restaurantList[index].reviewData,
-            fontSize = TEXT_SMALL,
-            modifier = Modifier.weight(1.0f)
+        Row(
+            verticalAlignment = Alignment.Bottom
         )
+        {
+            Column(modifier = Modifier
+                .padding(horizontal = MARGIN_MEDIUM_2).weight(1f),
+                verticalArrangement =
+                    Arrangement.spacedBy(MARGIN_SMALL)) {
+                //Restaurant Name
+                RestaurantName(restaurantList, index)
 
-        //Order
-        FoodOrderingAppButton(
-            onTapButton = {
-                onTapOrder(0)
-            },
-            modifier = Modifier.height(MARGIN_XLARGE),
-            btnText = stringResource(Res.string.order),
-            fontSize = TEXT_SMALL
-        )
+                //Meal categories / Cuisine type
+                MealCategoriesOrCuisineType(restaurantList, index)
+
+                //ReviewText
+                Text(
+                    restaurantList[index].reviewData,
+                    fontSize = TEXT_SMALL
+                )
+
+            }
+            //Order
+            FoodOrderingAppButton(
+                onTapButton = {
+                    onTapOrder(0)
+                },
+                modifier = Modifier.height(MARGIN_40),
+                btnText = stringResource(Res.string.order),
+                fontSize = TEXT_SMALL
+            )
+        }
+
+
+
     }
 }
 
@@ -132,4 +130,3 @@ data class RestaurantItem(
     val mealCategories: String,
     val reviewData: String
 )
-

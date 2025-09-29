@@ -13,9 +13,9 @@ import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
 
 
 @Composable
-fun ItemHeaderSection(modifier: Modifier) {
+fun ItemHeaderSection(modifier: Modifier, headerName: String) {
     Text(
-        "Featured",
+        headerName,
         color = TITLE_BLACK_COLOR,
         fontSize = TEXT_REGULAR_3X,
         fontWeight = FontWeight.Bold,

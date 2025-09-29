@@ -10,10 +10,6 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
@@ -28,25 +24,27 @@ import org.ttm.foodorderingappcmp.core.OUTLINE_TXT_FIELD_TXT_COLOR
 import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
 import org.ttm.foodorderingappcmp.core.TEXT_SMALL
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
-import org.ttm.foodorderingappcmp.features.restaurants.home.ui.FoodOrderingAppHomeScreen
 import org.ttm.foodorderingappcmp.features.orders.order_list.ui.FoodOrderingAppOrdersScreen
 import org.ttm.foodorderingappcmp.features.profile.setting.ui.FoodOrderingAppProfileScreen
+import org.ttm.foodorderingappcmp.features.restaurants.home.ui.FoodOrderingAppHomeScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeBottomNavigationScreen(onTapOrder: (Int)-> Unit) {
+fun HomeBottomNavigationScreen(selectedNavItem: String,
+                               onSelectedChange: (String) -> Unit,
+                               onTapOrder: (Int)-> Unit,
+                               onTapAbout: () -> Unit) {
 
     val bottomNavigationItems = listOf(
         BottomNavigationItemData(name = "Home", icon = painterResource(Res.drawable.ic_home)),
         BottomNavigationItemData(name = "Orders", icon = painterResource(Res.drawable.ic_orders)),
         BottomNavigationItemData(name = "Profile", icon = painterResource(Res.drawable.ic_profile))
     )
-//state
-    var selectedItem by remember { mutableStateOf("Home") }
+
     Scaffold(
         containerColor = SCREEN_BG_COLOR,
         topBar = {
-            HomeTopAppBar()
+           // HomeTopAppBar()
         },
         bottomBar = {
             NavigationBar(
@@ -54,7 +52,7 @@ fun HomeBottomNavigationScreen(onTapOrder: (Int)-> Unit) {
             ) {
                 bottomNavigationItems.forEach {
                     NavigationBarItem(
-                        selected = selectedItem == it.name,
+                        selected = selectedNavItem == it.name,
                         colors = NavigationBarItemDefaults.colors(
                             selectedIconColor = TITLE_BLACK_COLOR,
                             selectedTextColor = TITLE_BLACK_COLOR,
@@ -75,20 +73,24 @@ fun HomeBottomNavigationScreen(onTapOrder: (Int)-> Unit) {
                                 fontSize = TEXT_SMALL
                             )
                         },
-                        onClick = {
-                            selectedItem = it.name
-                        }
+                        onClick = { onSelectedChange(it.name) }
                     )
                 }
             }
 
         },
     ) { innerPadding ->
-       when(selectedItem){
+       when(selectedNavItem){
            "Home" -> FoodOrderingAppHomeScreen(modifier = Modifier.padding(innerPadding),
                onTapOrder = {restaurantId -> onTapOrder(restaurantId)})
-           "Orders" -> FoodOrderingAppOrdersScreen(modifier = Modifier.padding(innerPadding))
-           "Profile" -> FoodOrderingAppProfileScreen(modifier = Modifier.padding(innerPadding))
+           "Orders" -> FoodOrderingAppOrdersScreen(modifier = Modifier.padding(innerPadding),
+               onTapItem = {})
+           "Profile" -> FoodOrderingAppProfileScreen(modifier = Modifier.padding(innerPadding),
+               onTapLogout = {}
+               ,
+               onTapAbout = {
+                   onTapAbout()
+               })
        }
     }
 }
@@ -103,5 +105,5 @@ data class BottomNavigationItemData(
 @Preview
 @Composable
 fun HomeBottomNavigationScreenPreview() {
-    HomeBottomNavigationScreen(onTapOrder = {})
+    HomeBottomNavigationScreen(onTapOrder = {}, selectedNavItem = "", onSelectedChange = {}, onTapAbout = {})
 }

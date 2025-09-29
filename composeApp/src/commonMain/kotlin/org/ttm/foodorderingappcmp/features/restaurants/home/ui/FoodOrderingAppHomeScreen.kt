@@ -1,11 +1,14 @@
 package org.ttm.foodorderingappcmp.features.restaurants.home.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import foodorderingappcmp.composeapp.generated.resources.Res
 import foodorderingappcmp.composeapp.generated.resources.italiano_bistro
 import foodorderingappcmp.composeapp.generated.resources.napoli_pizzeria
@@ -15,6 +18,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.ttm.foodorderingappcmp.core.MARGIN_CARD_MEDIUM_2
 import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
+import org.ttm.foodorderingappcmp.features.restaurants.home_navigation.ui.HomeTopAppBar
 
 @Composable
 fun FoodOrderingAppHomeScreen(modifier: Modifier,onTapOrder : (Int) -> Unit) {
@@ -94,21 +98,31 @@ fun FoodOrderingAppHomeScreen(modifier: Modifier,onTapOrder : (Int) -> Unit) {
             reviewData = "4.8 ⭐\uFE0F  (3,300+)"
         ),
     )
-    LazyColumn(
-        modifier = modifier.fillMaxSize().background(
-            color = SCREEN_BG_COLOR
-        ),
-        verticalArrangement = Arrangement.spacedBy(MARGIN_CARD_MEDIUM_2)
-    ){
-        items(restaurantList.size){
-            RestaurantItemSection(restaurantList = restaurantList,
-                index = it,
-                onTapOrder = { restaurantId ->
-                    onTapOrder(restaurantId)
+    Scaffold(
+        containerColor = SCREEN_BG_COLOR,
+        topBar = {
+            HomeTopAppBar()
+        },
+        modifier = Modifier.fillMaxSize()
+        ) { innerPadding ->
+        LazyColumn(
+            modifier = Modifier.padding(top = innerPadding.calculateTopPadding(),
+                bottom = innerPadding.calculateBottomPadding()),
+            verticalArrangement = Arrangement.spacedBy(MARGIN_CARD_MEDIUM_2),
+            contentPadding = PaddingValues(bottom = 88.dp)
+        ){
+            items(restaurantList.size){
+                RestaurantItemSection(restaurantList = restaurantList,
+                    index = it,
+                    onTapOrder = { restaurantId ->
+                        onTapOrder(restaurantId)
 
-                })
+                    })
+            }
         }
     }
+
+
 
 }
 

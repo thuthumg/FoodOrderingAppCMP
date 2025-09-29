@@ -11,7 +11,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,10 +26,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.ttm.foodorderingappcmp.core.CATEGORY_TAB_DIVIDER_COLOR
 import org.ttm.foodorderingappcmp.core.CATEGORY_TAB_INDICATOR_COLOR
@@ -56,7 +62,9 @@ fun CategoryTabListSection(
     spaceBetweenItems: Dp = MARGIN_XLARGE,
     indicatorHeight: Dp = 4.dp,
     dividerThickness: Dp = 1.dp,
-) {
+    horizontalScrollState: LazyListState,
+
+    ) {
 
     Box(modifier.fillMaxWidth()) {
         // full-width divider
@@ -69,6 +77,7 @@ fun CategoryTabListSection(
         )
 
         LazyRow(
+            state = horizontalScrollState,
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .fillMaxWidth(),
@@ -77,10 +86,12 @@ fun CategoryTabListSection(
             verticalAlignment = Alignment.Bottom
         ) {
 
-            items(tabs.size) { index ->
+            //tabs.size
+            itemsIndexed((1..10).toList()) { index, num ->
 
                 val density = LocalDensity.current
-                var textWidthDp by remember(tabs[index]) { mutableStateOf(0.dp) } // per-item
+               // var textWidthDp by remember(tabs[index]) { mutableStateOf(0.dp) } // per-item
+                var textWidthDp by remember() { mutableStateOf(0.dp) }
 
                 val selected = index == selectedIndex
                 Column(
@@ -89,7 +100,8 @@ fun CategoryTabListSection(
                     verticalArrangement = Arrangement.Bottom
                 ) {
                     Text(
-                        text = tabs[index],
+                      //  text = tabs[index],
+                        "Featured $num",
                         fontSize = TEXT_REGULAR_2X,
                         fontWeight = if (selected) FontWeight.Black else FontWeight.SemiBold,
                         color = if (selected) selectedTextColor else unselectedTextColor,
@@ -124,12 +136,21 @@ fun CategoryTabListSection(
 private fun CategoryTabListSectionPreview() {
     var selected by remember { mutableStateOf(0) }
     val tabs = listOf("Featured", "Popular", "All","Featured", "Popular", "All","Featured", "Popular", "All")
+   // var verticalScrollState = rememberLazyListState()
     MaterialTheme {
         Column(Modifier.fillMaxWidth().padding(top = 24.dp)) {
             CategoryTabListSection(
                 tabs = tabs,
                 selectedIndex = selected,
-                onSelect = { selected = it }
+                onSelect = {
+                    selected = it
+//                    coroutineScope.launch {
+//                        selected = it
+//                        verticalScrollState.animateScrollToItem(selected)
+//                    }
+
+                },
+                horizontalScrollState = rememberLazyListState()
             )
         }
     }
