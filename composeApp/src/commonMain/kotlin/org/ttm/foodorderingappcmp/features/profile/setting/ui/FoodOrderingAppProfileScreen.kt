@@ -53,6 +53,7 @@ fun FoodOrderingAppProfileScreen(modifier: Modifier,onTapLogout: () -> Unit,onTa
         topBar = {
             FoodOrderingAppTopAppBar(
                 stringResource(Res.string.profile),
+                showBack = false,
                 onTapBack = {
 
                 })

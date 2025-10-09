@@ -16,7 +16,9 @@ import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FoodOrderingAppTopAppBar(title: String,onTapBack: () -> Unit) {
+fun FoodOrderingAppTopAppBar(title: String,
+                             showBack: Boolean = true,
+                             onTapBack: () -> Unit) {
     CenterAlignedTopAppBar(
         title = {
             Text(
@@ -27,14 +29,17 @@ fun FoodOrderingAppTopAppBar(title: String,onTapBack: () -> Unit) {
             )
         },
         navigationIcon = {
-            Icon(
-                Icons.AutoMirrored.Default.ArrowBack,
-                contentDescription = null,
-                tint = TITLE_BLACK_COLOR,
-                modifier = Modifier.clickable{
-                    onTapBack()
-                }
-            )
+            if(showBack){
+                Icon(
+                    Icons.AutoMirrored.Default.ArrowBack,
+                    contentDescription = null,
+                    tint = TITLE_BLACK_COLOR,
+                    modifier = Modifier.clickable{
+                        onTapBack()
+                    }
+                )
+            }
+
         }
     )
 }
