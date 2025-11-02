@@ -1,6 +1,5 @@
 package org.ttm.foodorderingappcmp.features.restaurants.detail.ui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -18,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -28,12 +28,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import coil3.compose.SubcomposeAsyncImage
 import foodorderingappcmp.composeapp.generated.resources.Res
-import foodorderingappcmp.composeapp.generated.resources.spicy_chicken_sandwich
+import foodorderingappcmp.composeapp.generated.resources.image_not_supported
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.ttm.foodorderingappcmp.common.ui.QtyActionType
 import org.ttm.foodorderingappcmp.common.ui.QuantityAdjustButton
+import org.ttm.foodorderingappcmp.common.ui.ShimmerBox
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM_2
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM_3
@@ -44,9 +46,13 @@ import org.ttm.foodorderingappcmp.core.TEXT_REGULAR
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_2X
 import org.ttm.foodorderingappcmp.core.TEXT_SMALL
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
+import org.ttm.foodorderingappcmp.features.restaurants.data.vos.FoodItemVO
 
 @Composable
-fun ItemDetailSection(showAddToCart: Boolean,onTapAddToCart: (Boolean) -> Unit) {
+fun ItemDetailSection(
+    foodItem: FoodItemVO,
+    onTapAddToCart: (Boolean) -> Unit
+) {
 
     Row(
         modifier = Modifier
@@ -58,10 +64,10 @@ fun ItemDetailSection(showAddToCart: Boolean,onTapAddToCart: (Boolean) -> Unit) 
         verticalAlignment = Alignment.CenterVertically
     ) {
 
-        ItemDescriptionSection()
+        ItemDescriptionSection(foodItem)
 
         ItemImageSection(
-            showAddToCart = showAddToCart,
+            foodItemVO = foodItem,
             onTapAddToCart = { it ->
             onTapAddToCart(it)
         })
@@ -69,7 +75,10 @@ fun ItemDetailSection(showAddToCart: Boolean,onTapAddToCart: (Boolean) -> Unit) 
 }
 
 @Composable
-private fun ItemImageSection(showAddToCart: Boolean, onTapAddToCart: (Boolean) -> Unit) {
+private fun ItemImageSection(
+    foodItemVO: FoodItemVO,
+    onTapAddToCart: (Boolean) -> Unit
+) {
 
     Box(
         modifier = Modifier
@@ -77,11 +86,11 @@ private fun ItemImageSection(showAddToCart: Boolean, onTapAddToCart: (Boolean) -
             .clip(RoundedCornerShape(MARGIN_MEDIUM))
     ) {
         //Item Image
-        FoodImageSection()
+        FoodImageSection(foodItemVO.imageUrl)
 
         //Add To Cart
         AddToCartSection(
-            showAddToCart = showAddToCart,
+            foodItemVO = foodItemVO,
             onTapAddToCart = { it ->
                 onTapAddToCart(it)
             }
@@ -91,27 +100,27 @@ private fun ItemImageSection(showAddToCart: Boolean, onTapAddToCart: (Boolean) -
 }
 
 @Composable
-private fun RowScope.ItemDescriptionSection() {
+private fun RowScope.ItemDescriptionSection(foodItem: FoodItemVO) {
     Column(
         modifier = Modifier
             .weight(1f),
         verticalArrangement = Arrangement.spacedBy(MARGIN_MEDIUM),
         ) {
 
-        MenuNameSection()
-        FoodNameSection()
-        FoodDescriptionSection()
-        PriceSection()
+       // MenuNameSection()
+        FoodNameSection(foodItem.name)
+        FoodDescriptionSection(foodItem.description)
+        PriceSection(foodItem.price)
     }
 }
 
 
 @Composable
 private fun BoxScope.AddToCartSection(
-    showAddToCart: Boolean,
+    foodItemVO: FoodItemVO,
     onTapAddToCart: (Boolean) -> Unit) {
 
-    if (!showAddToCart) {
+    if (foodItemVO.qty == 0) {
         QuantityAdjustButton(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -134,7 +143,7 @@ private fun BoxScope.AddToCartSection(
         ) {
 
             Text(
-                "1",
+                foodItemVO.qty.toString(),
                 fontSize = TEXT_SMALL,
                 fontWeight = FontWeight.Bold
             )
@@ -148,17 +157,38 @@ private fun BoxScope.AddToCartSection(
 }
 
 @Composable
-private fun FoodImageSection() {
-    Image(
-        painterResource(Res.drawable.spicy_chicken_sandwich),
+private fun FoodImageSection(imgUrl: String) {
+    SubcomposeAsyncImage(
+        imgUrl,
         contentDescription = null,
         contentScale = ContentScale.Crop,
+        loading = {
+            // CircularProgressIndicator(modifier = Modifier.size(30.dp))
+            ShimmerBox(Modifier.fillMaxSize())
+        },
+        error = {
+
+            Box(
+                modifier = Modifier
+                    .background(Color.Gray.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = painterResource(Res.drawable.image_not_supported),
+                    contentDescription = "Error loading image",
+                    modifier = Modifier.size(30.dp),
+                    tint = Color.Black
+                )
+            }
+
+
+        },
         modifier = Modifier.fillMaxSize()
     )
 }
 
 @Composable
-private fun PriceSection() {
+private fun PriceSection(price: Double) {
     Box(
         modifier = Modifier.height(32.dp)
             .width(80.dp)
@@ -168,7 +198,7 @@ private fun PriceSection() {
             )
     ) {
         Text(
-            "$9.99",
+            "$${price}",
             fontSize = TEXT_SMALL,
             color = TITLE_BLACK_COLOR,
             fontWeight = FontWeight.Bold,
@@ -188,18 +218,18 @@ private fun MenuNameSection() {
 }
 
 @Composable
-private fun FoodDescriptionSection() {
+private fun FoodDescriptionSection(description: String) {
     Text(
-        "Crispy chicken, spicy mayo, lettuce,tomato",
+        description,
         color = OUTLINE_TXT_FIELD_TXT_COLOR,
         fontSize = TEXT_REGULAR,
     )
 }
 
 @Composable
-private fun FoodNameSection() {
+private fun FoodNameSection(name: String) {
     Text(
-        "Spicy Chicken Sandwich",
+        name,
         color = TITLE_BLACK_COLOR,
         fontSize = TEXT_REGULAR_2X,
         fontWeight = FontWeight.Bold
@@ -207,11 +237,11 @@ private fun FoodNameSection() {
 }
 
 
-@Preview
-@Composable
-fun MenuBodySectionPreview(modifier: Modifier = Modifier) {
-    ItemDetailSection(
-        showAddToCart = false,
-        onTapAddToCart = {}
-    )
-}
+//@Preview
+//@Composable
+//fun MenuBodySectionPreview(modifier: Modifier = Modifier) {
+//    ItemDetailSection(
+//        foodItem = foodItem,
+//        showAddToCart = false
+//    ) {}
+//}

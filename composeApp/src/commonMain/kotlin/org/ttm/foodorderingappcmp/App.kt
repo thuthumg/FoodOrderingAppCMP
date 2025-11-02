@@ -2,53 +2,84 @@ package org.ttm.foodorderingappcmp
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import androidx.room.RoomDatabase
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.ttm.foodorderingappcmp.auth.ui.FoodOrderingAppLoginScreen
-import org.ttm.foodorderingappcmp.auth.ui.FoodOrderingAppRegisterScreen
-import org.ttm.foodorderingappcmp.features.orders.cart.ui.CartScreen
+import org.ttm.foodorderingappcmp.app.viewmodel.AppViewModel
+import org.ttm.foodorderingappcmp.auth.ui.FoodOrderingAppLoginScreenRoute
+import org.ttm.foodorderingappcmp.auth.ui.FoodOrderingAppRegisterRoute
+import org.ttm.foodorderingappcmp.auth.ui.viewmodel.LoginRegisterViewModel
 import org.ttm.foodorderingappcmp.core.FoodOrderingAppTypography
+import org.ttm.foodorderingappcmp.core.persistence.AppDatabase
+import org.ttm.foodorderingappcmp.core.persistence.AppDatabaseProvider
+import org.ttm.foodorderingappcmp.core.utils.apiToken
 import org.ttm.foodorderingappcmp.features.forgot_password.ForgotPasswordScreen
 import org.ttm.foodorderingappcmp.features.forgot_password.ResetPasswordScreen
+import org.ttm.foodorderingappcmp.features.orders.cart.ui.CartRoute
+import org.ttm.foodorderingappcmp.features.orders.cart.viewmodel.CartViewModel
 import org.ttm.foodorderingappcmp.features.orders.checkout.CheckoutScreen
 import org.ttm.foodorderingappcmp.features.orders.confirm_order.ConfirmOrderScreen
 import org.ttm.foodorderingappcmp.features.orders.order_review.OrderReviewScreen
 import org.ttm.foodorderingappcmp.features.profile.about.AboutScreen
+import org.ttm.foodorderingappcmp.features.restaurants.detail.ui.RestaurantDetailRoute
 import org.ttm.foodorderingappcmp.features.restaurants.home_navigation.ui.HomeBottomNavigationScreen
-import org.ttm.foodorderingappcmp.features.restaurants.detail.ui.RestaurantDetailScreen
+import org.ttm.foodorderingappcmp.features.restaurants.detail.viewmodel.RestaurantDetailViewModel
 
 @Composable
 @Preview
-fun App() {
-//state
-    // var selectedNavItem by remember { mutableStateOf("Home") }
+fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
+
+    AppDatabaseProvider.initializeDatabase(databaseBuilder)
 
     val navController = rememberNavController()
+
     MaterialTheme(
         typography = FoodOrderingAppTypography()
     ) {
 
+        val appViewModel = viewModel { AppViewModel() }
+        val state by appViewModel.state.collectAsStateWithLifecycle()
+
+        LaunchedEffect(Unit) {
+            appViewModel.autoLogin()
+        }
+
+
+        val startDestinationPoint =
+            if (state.loginStatus) {
+                NavRoutes.Home("Home")
+            } else {
+                NavRoutes.Login
+            }
+
 
         NavHost(
             navController = navController,
-            startDestination = NavRoutes.Login
+            startDestination =  startDestinationPoint
         ) {
             composable<NavRoutes.Login> {
-                FoodOrderingAppLoginScreen(onTapLogin = {
-                    navController.navigate(NavRoutes.Home("Home")){
-                        popUpTo(navController.graph.startDestinationId) {
-                            inclusive = true
+                val loginRegisterViewModel = viewModel { LoginRegisterViewModel() }
+
+                FoodOrderingAppLoginScreenRoute(
+                    loginRegisterViewModel,
+                    onNavigateHome = {
+                        navController.navigate(NavRoutes.Home("Home")) {
+                            popUpTo(navController.graph.startDestinationId) {
+                                inclusive = true
+                            }
                         }
-                    }
-                },
+                    },
                     onTapSignUp = {
                         navController.navigate(NavRoutes.Register) {
                             popUpTo(navController.graph.startDestinationId) {
@@ -59,24 +90,30 @@ fun App() {
                     onTapForgotPassword = {
                         navController.navigate(NavRoutes.ForgotPassword)
                     }
-                    )
+
+
+                )
             }
 
             composable<NavRoutes.Register> {
-                FoodOrderingAppRegisterScreen(
-                    onTapCreateAcc = {
-                        navController.navigate(NavRoutes.Login){
-                            popUpTo(NavRoutes.Register::class){
+                val loginRegisterViewModel = viewModel { LoginRegisterViewModel() }
+                FoodOrderingAppRegisterRoute(
+                    viewModel = loginRegisterViewModel,
+                    onNavigateHome = {
+                        navController.navigate(NavRoutes.Home("Home")) {
+                            popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
                             }
                         }
                     }
                 )
+
             }
 
             composable<NavRoutes.Home> { backStackEntry ->
                 val args = backStackEntry.toRoute<NavRoutes.Home>()
                 var selectedNavItem by remember { mutableStateOf(args.selectedPage) }
+                val loginRegisterViewModel = viewModel { LoginRegisterViewModel() }
 
                 HomeBottomNavigationScreen(
                     selectedNavItem = selectedNavItem,
@@ -84,16 +121,34 @@ fun App() {
                         selectedNavItem = selectedItem
                     },
                     onTapOrder = { restaurantId ->
-                        navController.navigate(NavRoutes.RestaurantDetail)
+                        navController.navigate(NavRoutes.RestaurantDetail(restaurantId = restaurantId))
                     },
                     onTapAbout = {
                         navController.navigate(NavRoutes.About)
+                    },
+                    onNavigateToLogin = {
+                        apiToken = ""
+                        loginRegisterViewModel.clearUserData()
+
+                        navController.navigate(NavRoutes.Login) {
+                            popUpTo(NavRoutes.Home::class) {
+                                inclusive = true
+                            }
+                        }
+                    },
+                    onTapShoppingCart = {
+                        navController.navigate(NavRoutes.Cart)
                     }
                 )
             }
 
-            composable<NavRoutes.RestaurantDetail> {
-                RestaurantDetailScreen(
+            composable<NavRoutes.RestaurantDetail> { backStackEntry ->
+                val args = backStackEntry.toRoute<NavRoutes.RestaurantDetail>()
+
+                val viewModel = viewModel {RestaurantDetailViewModel(args.restaurantId)}
+
+                RestaurantDetailRoute(
+                    restaurantViewModel = viewModel,
                     onTapBack = {
                         navController.navigateUp()
                     },
@@ -101,17 +156,35 @@ fun App() {
                         navController.navigate(NavRoutes.Cart)
                     }
                 )
+
             }
 
             composable<NavRoutes.Cart> {
-                CartScreen(
+                val cartViewModel =  viewModel { CartViewModel() }
+                CartRoute(
+                    cartViewModel = cartViewModel,
                     onTapBack = {
                         navController.navigateUp()
                     },
                     onTapPlaceOrder = {
                         navController.navigate(NavRoutes.Checkout)
-                    }
-                )
+                    },
+                    onTapOrderNow = {
+                        navController.navigate(NavRoutes.Home("Home")) {
+                            popUpTo(NavRoutes.Home::class) {
+                                inclusive = true
+                            }
+                        }
+                    })
+//                CartScreen(
+//                    onTapBack = {
+//                        navController.navigateUp()
+//                    },
+//                    onTapPlaceOrder = {
+//                        navController.navigate(NavRoutes.Checkout)
+//                    },
+//                    onTapOrderNow = {}
+//                )
             }
 
             composable<NavRoutes.Checkout> {
@@ -165,7 +238,7 @@ fun App() {
                         navController.navigateUp()
                     },
                     onTapResetPassword = {
-                        navController.navigate(NavRoutes.Login){
+                        navController.navigate(NavRoutes.Login) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
                             }
@@ -189,7 +262,7 @@ fun App() {
                 AboutScreen(
                     onTapBack = {
                         navController.navigate(NavRoutes.Home("Profile")) {
-                            popUpTo(NavRoutes.Home::class){
+                            popUpTo(NavRoutes.Home::class) {
                                 inclusive = true
                             }
                         }
@@ -214,7 +287,7 @@ sealed class NavRoutes {
     data class Home(val selectedPage: String)
 
     @Serializable
-    object RestaurantDetail
+    data class RestaurantDetail(val restaurantId: Long)
 
     @Serializable
     object Cart

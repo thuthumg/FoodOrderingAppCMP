@@ -30,9 +30,9 @@ fun OrderItemRow() {
         verticalAlignment = Alignment.CenterVertically
     ) {
         //Image
-        SelectedFoodItemImageSection(
-            itemImage = painterResource(Res.drawable.spicy_chicken_sandwich)
-        )
+//        SelectedFoodItemImageSection(
+//            itemImage = painterResource(Res.drawable.spicy_chicken_sandwich)
+//        )
 
         //Selected Item Name and Quantity Adjustment
         Column(

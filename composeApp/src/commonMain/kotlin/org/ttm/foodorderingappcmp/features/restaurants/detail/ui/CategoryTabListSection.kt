@@ -87,7 +87,7 @@ fun CategoryTabListSection(
         ) {
 
             //tabs.size
-            itemsIndexed((1..10).toList()) { index, num ->
+            itemsIndexed(tabs) { index, tabName ->
 
                 val density = LocalDensity.current
                // var textWidthDp by remember(tabs[index]) { mutableStateOf(0.dp) } // per-item
@@ -100,8 +100,7 @@ fun CategoryTabListSection(
                     verticalArrangement = Arrangement.Bottom
                 ) {
                     Text(
-                      //  text = tabs[index],
-                        "Featured $num",
+                        tabName,
                         fontSize = TEXT_REGULAR_2X,
                         fontWeight = if (selected) FontWeight.Black else FontWeight.SemiBold,
                         color = if (selected) selectedTextColor else unselectedTextColor,

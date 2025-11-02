@@ -1,5 +1,6 @@
 package org.ttm.foodorderingappcmp.features.restaurants.home_navigation.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -24,7 +25,7 @@ import org.ttm.foodorderingappcmp.core.TOP_APP_BAR_ICON_SIZE
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun HomeTopAppBar() {
+fun HomeTopAppBar(onTapShoppingCart:() -> Unit) {
     TopAppBar(
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = SCREEN_BG_COLOR
@@ -44,7 +45,9 @@ fun HomeTopAppBar() {
                 contentDescription = null,
                 modifier = Modifier.size(TOP_APP_BAR_ICON_SIZE).offset(
                     x = -MARGIN_MEDIUM
-                )
+                ).clickable{
+                    onTapShoppingCart()
+                }
             )
         })
 }

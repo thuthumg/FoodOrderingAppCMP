@@ -1,6 +1,5 @@
 package org.ttm.foodorderingappcmp.features.orders.cart.ui
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -13,22 +12,22 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import foodorderingappcmp.composeapp.generated.resources.Res
-import foodorderingappcmp.composeapp.generated.resources.spicy_chicken_sandwich
-import org.jetbrains.compose.resources.painterResource
+import coil3.compose.SubcomposeAsyncImage
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM_2
 import org.ttm.foodorderingappcmp.core.TEXT_LARGE
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_2X
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
+import org.ttm.foodorderingappcmp.features.restaurants.data.vos.FoodItemVO
 
 
 @Composable
-fun CartItemRow(itemQty: Int,
-                        onClickQtyAction: (Int) -> Unit) {
+fun CartItemRow(
+    foodItemVO: FoodItemVO,
+    onIncrease:(FoodItemVO) -> Unit,
+    onDecrease : (FoodItemVO) -> Unit){
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -38,7 +37,7 @@ fun CartItemRow(itemQty: Int,
     ) {
         //Image
         SelectedFoodItemImageSection(
-            itemImage = painterResource(Res.drawable.spicy_chicken_sandwich)
+            itemImage = foodItemVO.imageUrl
         )
 
         //Selected Item Name and Quantity Adjustment
@@ -50,21 +49,28 @@ fun CartItemRow(itemQty: Int,
             ) {
 
             SelectedFoodItemNameSection(
-                itemName = "Spicy Chicken Sandwich"
+                itemName = foodItemVO.name
             )
 
             QuantitySelector(
-                itemQty = itemQty,
-                onClickQtyAction = { it ->
-                    onClickQtyAction(it)
-
-                })
+                itemQty = foodItemVO.qty,
+                onIncrease = { itemQty ->
+                    onIncrease(foodItemVO.copy(
+                        qty = itemQty
+                    ))
+                },
+                onDecrease = { itemQty ->
+                    onDecrease(foodItemVO.copy(
+                        qty = itemQty
+                    ))
+                }
+            )
 
         }
 
         //Price
         SelectedItemPriceSection(
-            itemPrice = "$12.99"
+            itemPrice = "$${foodItemVO.getItemPrice()}"
         )
 
     }
@@ -93,9 +99,9 @@ fun SelectedFoodItemNameSection(itemName: String) {
 
 @Composable
 fun SelectedFoodItemImageSection(
-    itemImage: Painter,
+    itemImage: String,
 ) {
-    Image(
+    SubcomposeAsyncImage(
         itemImage,
         contentDescription = null,
         contentScale = ContentScale.Crop,

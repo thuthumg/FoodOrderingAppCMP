@@ -1,6 +1,7 @@
 package org.ttm.foodorderingappcmp.auth.ui
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -15,17 +17,21 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import foodorderingappcmp.composeapp.generated.resources.Res
 import foodorderingappcmp.composeapp.generated.resources.dont_have_an_account
 import foodorderingappcmp.composeapp.generated.resources.email
@@ -38,8 +44,12 @@ import foodorderingappcmp.composeapp.generated.resources.welcome_back
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.ttm.foodorderingappcmp.auth.ui.state.LoginRegisterState
+import org.ttm.foodorderingappcmp.auth.ui.viewmodel.LoginRegisterViewModel
+import org.ttm.foodorderingappcmp.common.ui.ErrorAlertDialog
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppButton
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppOutlineTxtField
+import org.ttm.foodorderingappcmp.common.ui.LoadingDialog
 import org.ttm.foodorderingappcmp.core.MARGIN_CARD_MEDIUM_2
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM_2
@@ -49,13 +59,75 @@ import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_2X
 import org.ttm.foodorderingappcmp.core.TEXT_XXLARGE
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
+import org.ttm.foodorderingappcmp.core.utils.apiToken
+
+
+@Composable
+fun FoodOrderingAppLoginScreenRoute(viewModel: LoginRegisterViewModel,
+                                    onNavigateHome: () -> Unit,
+                                    onTapSignUp: ()-> Unit,
+                                    onTapForgotPassword: () -> Unit) {
+
+
+    val state by viewModel.state.collectAsStateWithLifecycle()
+
+
+
+    if (state.successStatus){
+        state.loginRegisterVO?.let {
+            apiToken = it.accessToken
+            onNavigateHome()
+        }
+    }else{
+        if (state.message.isNotBlank() && !(state.dismissStatus)) {
+            apiToken = ""
+            ErrorAlertDialog(
+                showDialog = true,
+                title = "Error",
+                message = state.message,
+                onDismiss = {
+                      viewModel.onDismissErrorAlertDialog()
+                }
+            )
+        }
+    }
+
+    if (state.loading) {
+        LoadingDialog(
+            onDismissRequest = {}
+        )
+    }
+
+
+
+    FoodOrderingAppLoginScreen(
+        state = state,
+        onTapLogin = { email, password ->
+            viewModel.onClickLogin(email, password)
+        },
+        onTapSignUp = onTapSignUp,
+        onTapForgotPassword = onTapForgotPassword
+    )
+
+
+}
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FoodOrderingAppLoginScreen(onTapLogin: () -> Unit,onTapSignUp: ()-> Unit,onTapForgotPassword: () -> Unit) {
+fun FoodOrderingAppLoginScreen(
+    state : LoginRegisterState,
+    onTapLogin: (email: String,password: String) -> Unit,
+    onTapSignUp: ()-> Unit,
+    onTapForgotPassword: () -> Unit) {
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+
+    val focusManager = LocalFocusManager.current
+    val passwordFocusRequester = remember { FocusRequester() }
+
 
     Scaffold(
         containerColor = SCREEN_BG_COLOR,
@@ -88,7 +160,6 @@ fun FoodOrderingAppLoginScreen(onTapLogin: () -> Unit,onTapSignUp: ()-> Unit,onT
         Column(
             modifier = Modifier
                 .padding(innerPadding).fillMaxSize(),
-           // verticalArrangement = Arrangement.spacedBy(MARGIN_MEDIUM_2)
         ) {
 
             //title section
@@ -111,7 +182,9 @@ fun FoodOrderingAppLoginScreen(onTapLogin: () -> Unit,onTapSignUp: ()-> Unit,onT
                 isPasswordField = false,
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Next,
-                onImeAction = { },
+                onImeAction = {
+                    passwordFocusRequester.requestFocus()
+                },
                 modifier = Modifier
                     .padding(horizontal = MARGIN_MEDIUM_2, vertical = MARGIN_MEDIUM_2)
                     .fillMaxWidth())
@@ -128,7 +201,10 @@ fun FoodOrderingAppLoginScreen(onTapLogin: () -> Unit,onTapSignUp: ()-> Unit,onT
                 isPasswordField = true,
                 keyboardType = KeyboardType.Email,
                 imeAction = ImeAction.Done,
-                onImeAction = { },
+                onImeAction = {
+                    focusManager.clearFocus()
+                    onTapLogin(email,password)
+                },
                 modifier = Modifier
                     .padding(horizontal = MARGIN_MEDIUM_2, vertical = MARGIN_MEDIUM)
                     .fillMaxWidth()
@@ -149,7 +225,7 @@ fun FoodOrderingAppLoginScreen(onTapLogin: () -> Unit,onTapSignUp: ()-> Unit,onT
             //Log in Button Section
             FoodOrderingAppButton(
                 onTapButton = {
-                    onTapLogin()
+                    onTapLogin(email,password)
                 },
                 modifier =
                     Modifier.padding(horizontal = MARGIN_MEDIUM_2, vertical = MARGIN_CARD_MEDIUM_2)
@@ -187,9 +263,9 @@ fun FoodOrderingAppLoginScreen(onTapLogin: () -> Unit,onTapSignUp: ()-> Unit,onT
 
 }
 
-
-@Preview
-@Composable
-fun FoodOrderingAppLoginScreenPreview() {
-    FoodOrderingAppLoginScreen(onTapLogin = {}, onTapSignUp = {}, onTapForgotPassword = {})
-}
+//
+//@Preview
+//@Composable
+//fun FoodOrderingAppLoginScreenPreview() {
+//    FoodOrderingAppLoginScreen(onTapLogin = {}, onTapSignUp = {}, onTapForgotPassword = {})
+//}

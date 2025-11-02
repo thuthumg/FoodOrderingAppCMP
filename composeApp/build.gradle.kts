@@ -8,6 +8,9 @@ plugins {
     alias(libs.plugins.composeCompiler)
 
     alias(libs.plugins.jetbrains.kotlin.serialization)
+
+    //room
+    alias(libs.plugins.ksp)
 }
 
 kotlin {
@@ -31,6 +34,7 @@ kotlin {
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
+            implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -46,6 +50,15 @@ kotlin {
 
             implementation(libs.jetbrains.compose.navigation)
             implementation(libs.kotlinx.serialization.json)
+            implementation(libs.bundles.ktor)
+
+            implementation(libs.androidx.room.runtime)
+            implementation(libs.sqlite.bundled)
+
+            implementation(libs.bundles.coil)
+        }
+        iosMain.dependencies{
+            implementation(libs.ktor.client.darwin)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -82,5 +95,6 @@ android {
 
 dependencies {
     debugImplementation(compose.uiTooling)
+    ksp(libs.androidx.room.compiler)
 }
 

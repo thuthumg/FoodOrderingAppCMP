@@ -14,22 +14,32 @@ import org.ttm.foodorderingappcmp.common.ui.QuantityAdjustButton
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_3X
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
+import org.ttm.foodorderingappcmp.features.restaurants.data.vos.FoodItemVO
 
 
 @Composable
 fun QuantitySelector(
     itemQty: Int,
-    onClickQtyAction: (Int) -> Unit,
+    onDecrease: (Int) -> Unit,
+    onIncrease: (Int) -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(MARGIN_MEDIUM)
     ) {
 
-        DecreaseItemQuantityButton(
-            itemQty = itemQty,
-            onDecrease = { it ->
-                onClickQtyAction(it)
+//        DecreaseItemQuantityButton(
+//            itemQty = itemQty,
+//            onDecrease = { it ->
+//                onClickQtyAction(it)
+//            }
+//        )
+        QuantityAdjustButton(
+            modifier = Modifier.size(32.dp),
+            type = QtyActionType.Decrease,
+            onClick = {
+               onDecrease(itemQty-1)
+
             }
         )
 
@@ -37,13 +47,24 @@ fun QuantitySelector(
             quantity = itemQty
         )
 
-        IncreaseItemQuantityButton(
-            itemQty = itemQty,
-            onIncrease = {
-                it ->
-                onClickQtyAction(it)
+
+        QuantityAdjustButton(
+            modifier = Modifier.size(32.dp),
+            type = QtyActionType.Increase,
+            onClick = {
+                onIncrease(itemQty+1)
             }
         )
+
+
+//
+//        IncreaseItemQuantityButton(
+//            itemQty = itemQty,
+//            onIncrease = {
+//                it ->
+//                onClickQtyAction(it)
+//            }
+//        )
     }
 }
 
