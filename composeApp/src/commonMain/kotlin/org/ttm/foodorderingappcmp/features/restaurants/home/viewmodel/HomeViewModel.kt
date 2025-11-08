@@ -19,29 +19,29 @@ class HomeViewModel: ViewModel() {
     val homeState = _state.asStateFlow()
 
     init {
+        getAllRestaurants()
+    }
 
+    fun getAllRestaurants(){
         viewModelScope.launch {
 
-            _state.update { it.copy(loading = true, dismissStatus = true) }
+            _state.update { it.copy(loading = true, errorDialogShowStatus = false) }
 
             when(val result = restaurantRepository.getAllRestaurants()){
                 is Resource.Error -> _state.update {
                     it.copy(
                         loading = false,
                         message = result.message,
-                        successStatus = false,
-                        dismissStatus = false
+                        errorDialogShowStatus = true
                     )
                 }
-                Resource.Loading ->  _state.update { it.copy(loading = true, dismissStatus = true) }
 
                 is Resource.Success -> _state.update {
                     it.copy(
-                         restaurantVO =  result.data,
+                        restaurantList =  result.data,
                         loading = false,
                         message = "",
-                        successStatus = true,
-                        dismissStatus = true
+                        errorDialogShowStatus = false
                     )
                 }
             }
@@ -51,11 +51,9 @@ class HomeViewModel: ViewModel() {
 
         }
     }
-
-
     fun onDismissErrorAlertDialog() {
         _state.update {
-            it.copy(dismissStatus = true, goToLogin = true)
+            it.copy(errorDialogShowStatus = false, loginStatus = false)
         }
     }
 }

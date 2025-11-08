@@ -8,13 +8,19 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.ttm.foodorderingappcmp.core.network.Resource
 import org.ttm.foodorderingappcmp.features.orders.cart.state.CartState
-import org.ttm.foodorderingappcmp.features.orders.data.CartRepository
+import org.ttm.foodorderingappcmp.features.orders.data.repository.CartRepository
+import org.ttm.foodorderingappcmp.features.orders.data.repository.CheckoutRepository
+import org.ttm.foodorderingappcmp.features.orders.data.vos.DeliveryAddressVO
+import org.ttm.foodorderingappcmp.features.orders.data.vos.PaymentVO
+import org.ttm.foodorderingappcmp.features.orders.data.vos.DeliveryAddressAndPaymentVO
 import org.ttm.foodorderingappcmp.features.restaurants.data.vos.FoodItemVO
 
 class CartViewModel: ViewModel() {
 
 
     val cartRepository = CartRepository
+
+    val checkoutRepository = CheckoutRepository
 
     private val _state = MutableStateFlow(CartState())
 
@@ -27,7 +33,7 @@ class CartViewModel: ViewModel() {
     fun getAllCartList(){
         viewModelScope.launch {
 
-            _state.update { it.copy(loading = true, dismissStatus = true) }
+            _state.update { it.copy(loading = true, errorDialogShowStatus = false) }
 
             when(val result = cartRepository.getAllCartFromDb()){
                 is Resource.Error -> _state.update {
@@ -35,7 +41,7 @@ class CartViewModel: ViewModel() {
                         loading = false,
                         message = result.message,
                         successStatus = false,
-                        dismissStatus = false
+                        errorDialogShowStatus = true
                     )
                 }
                 is Resource.Success -> _state.update {
@@ -44,25 +50,24 @@ class CartViewModel: ViewModel() {
                         loading = false,
                         message = "",
                         successStatus = true,
-                        dismissStatus = true
+                        errorDialogShowStatus = false
                     )
                 }
-                else -> Unit
             }
         }
     }
 
     fun onDismissErrorAlertDialog() {
         _state.update {
-            it.copy(dismissStatus = true)
+            it.copy(loading = false, errorDialogShowStatus = false)
         }
     }
 
     fun onDecreaseItemQty(foodItemVO: FoodItemVO) {
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, dismissStatus = true) }
+            _state.update { it.copy(loading = true, errorDialogShowStatus = false) }
 
-            if (foodItemVO.qty >= 1) {
+            if ((foodItemVO.quantity ?: 0)>= 1) {
                 cartRepository.insertCart(foodItemVO)
                 getAllCartList()
             } else {
@@ -96,11 +101,94 @@ class CartViewModel: ViewModel() {
 
     fun onIncreaseItemQty(foodItemVO: FoodItemVO) {
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, dismissStatus = true) }
+            _state.update { it.copy(loading = true, errorDialogShowStatus = false) }
 
             cartRepository.insertCart(foodItemVO)
             getAllCartList()
         }
+    }
+
+
+    fun getDeliveryAddressesAndPaymentMethods(){
+        viewModelScope.launch {
+
+            _state.update { it.copy(loading = true,
+                errorDialogShowStatus = false
+            )
+            }
+
+            when(val result = cartRepository.getDeliveryAddressesAndPaymentMethods()){
+                is Resource.Error -> _state.update {
+                    it.copy(
+                        loading = false,
+                        message = result.message,
+                        successStatus = false,
+                        errorDialogShowStatus = true,
+                        deliveryAddressAndPaymentListVO = null
+                    )
+                }
+                is Resource.Success ->{
+                    if(result.data.deliveryAddresses.isNotEmpty() && result.data.paymentMethods.isNotEmpty()){
+                        _state.update {
+                            it.copy(
+                                loading = false,
+                                message = "",
+                                successStatus = true,
+                                errorDialogShowStatus = false,
+                                showDeliveryPaymentDialog = true,
+                                deliveryAddressAndPaymentListVO = result.data
+                            )
+                        }
+                    }else{
+                        _state.update {
+                            it.copy(
+                                loading = false,
+                                message = "",
+                                successStatus = true,
+                                errorDialogShowStatus = false,
+                                showDeliveryPaymentDialog = false,
+                                deliveryAddressAndPaymentListVO = result.data
+                            )
+                        }
+                    }
+
+                }
+            }
+        }
+    }
+    fun onDismissDeliveryPaymentDialog() {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(loading = false,
+                    showDeliveryPaymentDialog = null,
+                    deliveryAddressAndPaymentListVO = null)
+            }
+        }
+
+    }
+
+    fun onTapConfirm(deliveryAddressVO: DeliveryAddressVO,paymentVO: PaymentVO){
+
+        viewModelScope.launch {
+                checkoutRepository.deleteAllDeliveryAddressAndPayment()
+                checkoutRepository.insertDeliveryAddressAndPayment(
+                    DeliveryAddressAndPaymentVO(
+                    deliveryAddress = deliveryAddressVO,
+                    paymentMethod = paymentVO
+                    )
+                )
+
+            _state.update {
+                it.copy(loading = false,
+                    showDeliveryPaymentDialog = null,
+                    deliveryAddressAndPaymentListVO = null)
+            }
+
+
+
+        }
+
+
     }
 
 

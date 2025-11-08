@@ -1,6 +1,5 @@
 package org.ttm.foodorderingappcmp.features.restaurants.detail.viewmodel
 
-import androidx.compose.animation.SharedTransitionScope
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
@@ -8,7 +7,6 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -29,18 +27,19 @@ class RestaurantDetailViewModel(val restaurantId: Long) : ViewModel(){
     val restaurantDetailState = _state.onStart{
 
         val cartItems = getAllShoppingCartFromDb()
+
         _state.value.restaurantVO?.let { restaurantVO ->
             val updatedRestaurant =
                 if (cartItems.isNotEmpty()){
                     updateQtyInRestaurant(restaurantVO, cartItems)
                 }
                 else
-                {
+                { //reset quantity zero
                     restaurantVO.copy(
                         foodCategories = restaurantVO.foodCategories?.map { foodCategory ->
                             foodCategory.copy(
                                 foodItems = foodCategory.foodItems.map { item ->
-                                    item.copy(qty = 0)
+                                    item.copy(quantity = 0)
                                 }
                             )
                         }
@@ -53,8 +52,7 @@ class RestaurantDetailViewModel(val restaurantId: Long) : ViewModel(){
                     loading = false,
                     message = "",
                     showViewMyCart = cartItems.isNotEmpty(),
-                    successStatus = true,
-                    dismissStatus = true
+                    errorDialogShowStatus = false
                 )
             }
         }
@@ -75,7 +73,8 @@ class RestaurantDetailViewModel(val restaurantId: Long) : ViewModel(){
     }
 
     fun getRestaurantDetails() = viewModelScope.launch {
-        _state.update { it.copy(loading = true, dismissStatus = true) }
+
+        _state.update { it.copy(loading = true, errorDialogShowStatus = false) }
 
         try {
             supervisorScope {
@@ -102,8 +101,7 @@ class RestaurantDetailViewModel(val restaurantId: Long) : ViewModel(){
                                 loading = false,
                                 message = "",
                                 showViewMyCart = cartItems.isNotEmpty(),
-                                successStatus = true,
-                                dismissStatus = true
+                                errorDialogShowStatus = false
                             )
                         }
                     }
@@ -115,12 +113,10 @@ class RestaurantDetailViewModel(val restaurantId: Long) : ViewModel(){
                                 loading = false,
                                 message = result.message,
                                 showViewMyCart = false,
-                                successStatus = false,
-                                dismissStatus = false
+                                errorDialogShowStatus = true
                             )
                         }
                     }
-                    else -> Unit
                 }
             }
         } catch (e: Exception) {
@@ -129,8 +125,7 @@ class RestaurantDetailViewModel(val restaurantId: Long) : ViewModel(){
                     loading = false,
                     message = e.message ?: "Something went wrong!",
                     showViewMyCart = false,
-                    successStatus = false,
-                    dismissStatus = false
+                    errorDialogShowStatus = true
 
                 )
             }
@@ -146,14 +141,14 @@ class RestaurantDetailViewModel(val restaurantId: Long) : ViewModel(){
         restaurant: RestaurantVO,
         cartItems: List<FoodItemVO>
     ): RestaurantVO {
-        val qtyMap = cartItems.associateBy({ it.id }, { it.qty })
+        val qtyMap = cartItems.associateBy({ it.id }, { it.quantity })
 
        // val qtyMap = cartItems.map { it.id to (it.qty ?: 0) }.toMap()
 
         val updatedCategories = restaurant.foodCategories?.map { category ->
             val updatedFoods = category.foodItems.map { food ->
                 val newQty = qtyMap[food.id] ?: 0   // 0 or keep null if not in cart
-                food.copy(qty = newQty)
+                food.copy(quantity = newQty)
             }
             category.copy( foodItems =  updatedFoods)
         }
@@ -163,7 +158,7 @@ class RestaurantDetailViewModel(val restaurantId: Long) : ViewModel(){
 
     fun addToCart(foodItemVO: FoodItemVO){
         viewModelScope.launch {
-         restaurantRepository.insertShoppingCart(foodItemVO.copy(qty = 1))
+         restaurantRepository.insertShoppingCart(foodItemVO.copy(quantity = 1))
           getRestaurantDetails()
         }
 
@@ -171,7 +166,7 @@ class RestaurantDetailViewModel(val restaurantId: Long) : ViewModel(){
 
     fun onDismissErrorAlertDialog() {
         _state.update {
-            it.copy(dismissStatus = true)
+            it.copy(errorDialogShowStatus = false)
         }
     }
 

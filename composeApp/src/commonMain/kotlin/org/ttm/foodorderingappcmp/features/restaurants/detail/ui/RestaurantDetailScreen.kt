@@ -13,31 +13,26 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.SubcomposeAsyncImage
 import foodorderingappcmp.composeapp.generated.resources.Res
 import foodorderingappcmp.composeapp.generated.resources.image_not_supported
@@ -69,23 +64,6 @@ fun RestaurantDetailRoute(
 
     val restaurantDetailState by restaurantViewModel.restaurantDetailState.collectAsStateWithLifecycle()
 
-    if (restaurantDetailState.message.isNotBlank() && !(restaurantDetailState.dismissStatus)) {
-        ErrorAlertDialog(
-            showDialog = true,
-            title = "Error",
-            message = restaurantDetailState.message,
-            onDismiss = {
-                restaurantViewModel.onDismissErrorAlertDialog()
-            }
-        )
-    }
-
-    if (restaurantDetailState.loading) {
-        LoadingDialog(
-            onDismissRequest = {}
-        )
-    }
-
     RestaurantDetailScreen(
         restaurantDetailState = restaurantDetailState,
         onTapBack = {
@@ -96,6 +74,9 @@ fun RestaurantDetailRoute(
         },
         onTapAddToCart = { foodItemVO ->
             restaurantViewModel.addToCart(foodItemVO)
+        },
+        onDismissErrorAlertDialog = {
+            restaurantViewModel.onDismissErrorAlertDialog()
         }
     )
 }
@@ -107,18 +88,38 @@ fun RestaurantDetailScreen(
     restaurantDetailState: RestaurantDetailState,
     onTapBack: () -> Unit,
     onTapViewMyCart: () -> Unit,
-    onTapAddToCart: (FoodItemVO) -> Unit
+    onTapAddToCart: (FoodItemVO) -> Unit,
+    onDismissErrorAlertDialog: () -> Unit
 ) {
-
 
     val verticalScrollState = rememberLazyListState()
     val horizontalScrollState = rememberLazyListState()
 
     val coroutineScope = rememberCoroutineScope()
 
-
     var selected by remember { mutableStateOf(0) }
     val tabs = restaurantDetailState.restaurantVO?.foodCategories?.map { it.name } ?: listOf()
+
+
+
+    /************* Loading ********************/
+    if (restaurantDetailState.loading) {
+        LoadingDialog(
+            onDismissRequest = {}
+        )
+    }
+
+    /************* API Call Error ********************/
+    if (restaurantDetailState.message.isNotBlank() && (restaurantDetailState.errorDialogShowStatus)) {
+        ErrorAlertDialog(
+            title = "Error",
+            message = restaurantDetailState.message,
+            onDismiss = {
+                onDismissErrorAlertDialog()
+            }
+        )
+    }
+
 
 //
 //    val density = LocalDensity.current
@@ -134,6 +135,7 @@ fun RestaurantDetailScreen(
     val topOffsetPx = with(density){
         with(density) { stickyHeaderHeightPx.toDp() }.roundToPx()}
 
+    /***************** Restaurant Detail Screen ********************************/
     Scaffold(
         containerColor = SCREEN_BG_COLOR,
         topBar = {
@@ -171,7 +173,7 @@ fun RestaurantDetailScreen(
                             onSelect = {
                                 coroutineScope.launch {
                                     selected = it
-                                    verticalScrollState.animateScrollToItem(selected +1)
+                                    verticalScrollState.animateScrollToItem(selected + 2, -100)
                                     horizontalScrollState.animateScrollToItem(selected)
                                 }
 

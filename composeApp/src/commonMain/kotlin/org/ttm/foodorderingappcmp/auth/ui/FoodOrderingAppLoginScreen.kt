@@ -1,7 +1,6 @@
 package org.ttm.foodorderingappcmp.auth.ui
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -9,7 +8,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -17,7 +15,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,7 +40,6 @@ import foodorderingappcmp.composeapp.generated.resources.sign_up
 import foodorderingappcmp.composeapp.generated.resources.welcome_back
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.ttm.foodorderingappcmp.auth.ui.state.LoginRegisterState
 import org.ttm.foodorderingappcmp.auth.ui.viewmodel.LoginRegisterViewModel
 import org.ttm.foodorderingappcmp.common.ui.ErrorAlertDialog
@@ -63,50 +59,26 @@ import org.ttm.foodorderingappcmp.core.utils.apiToken
 
 
 @Composable
-fun FoodOrderingAppLoginScreenRoute(viewModel: LoginRegisterViewModel,
-                                    onNavigateHome: () -> Unit,
+fun FoodOrderingAppLoginScreenRoute(loginRegisterViewModel: LoginRegisterViewModel,
+                                    onNavigateToHome: () -> Unit,
                                     onTapSignUp: ()-> Unit,
                                     onTapForgotPassword: () -> Unit) {
 
 
-    val state by viewModel.state.collectAsStateWithLifecycle()
-
-
-
-    if (state.successStatus){
-        state.loginRegisterVO?.let {
-            apiToken = it.accessToken
-            onNavigateHome()
-        }
-    }else{
-        if (state.message.isNotBlank() && !(state.dismissStatus)) {
-            apiToken = ""
-            ErrorAlertDialog(
-                showDialog = true,
-                title = "Error",
-                message = state.message,
-                onDismiss = {
-                      viewModel.onDismissErrorAlertDialog()
-                }
-            )
-        }
-    }
-
-    if (state.loading) {
-        LoadingDialog(
-            onDismissRequest = {}
-        )
-    }
-
+    val state by loginRegisterViewModel.state.collectAsStateWithLifecycle()
 
 
     FoodOrderingAppLoginScreen(
         state = state,
         onTapLogin = { email, password ->
-            viewModel.onClickLogin(email, password)
+            loginRegisterViewModel.onClickLogin(email, password)
         },
         onTapSignUp = onTapSignUp,
-        onTapForgotPassword = onTapForgotPassword
+        onTapForgotPassword = onTapForgotPassword,
+        onNavigateToHome = onNavigateToHome,
+        onDismissErrorAlertDialog = {
+            loginRegisterViewModel.onDismissErrorAlertDialog()
+        }
     )
 
 
@@ -120,7 +92,9 @@ fun FoodOrderingAppLoginScreen(
     state : LoginRegisterState,
     onTapLogin: (email: String,password: String) -> Unit,
     onTapSignUp: ()-> Unit,
-    onTapForgotPassword: () -> Unit) {
+    onTapForgotPassword: () -> Unit,
+    onNavigateToHome: () -> Unit,
+    onDismissErrorAlertDialog:() -> Unit) {
 
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -129,6 +103,38 @@ fun FoodOrderingAppLoginScreen(
     val passwordFocusRequester = remember { FocusRequester() }
 
 
+    /************ Loading *****************/
+    if (state.loading) {
+        LoadingDialog(
+            onDismissRequest = {}
+        )
+    }
+
+    /************ Login Success and Fail *****************/
+    if (state.loginStatus){
+
+        //success
+        state.loginRegisterVO?.let {
+            apiToken = it.accessToken
+            onNavigateToHome()
+        }
+    }else{
+
+        //fail
+        if (state.message.isNotBlank() && (state.errorDialogShowStatus)) {
+            apiToken = ""
+            ErrorAlertDialog(
+                // showDialog = true,
+                title = "Error",
+                message = state.message,
+                onDismiss = {
+                    onDismissErrorAlertDialog()
+                }
+            )
+        }
+    }
+
+    /******************** Login Screen *********************************/
     Scaffold(
         containerColor = SCREEN_BG_COLOR,
         topBar = {

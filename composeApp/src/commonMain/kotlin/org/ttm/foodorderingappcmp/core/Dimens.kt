@@ -39,3 +39,5 @@ val TEXT_XLARGE = 26.sp
 val TEXT_XXLARGE = 28.sp
 
 val TEXT_BIG = 32.sp
+
+val ACTION_BAR_HEIGHT = 88.dp

@@ -1,6 +1,5 @@
 package org.ttm.foodorderingappcmp.features.restaurants.home_navigation.ui
 
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -19,27 +18,27 @@ import foodorderingappcmp.composeapp.generated.resources.ic_home
 import foodorderingappcmp.composeapp.generated.resources.ic_orders
 import foodorderingappcmp.composeapp.generated.resources.ic_profile
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.ttm.foodorderingappcmp.auth.ui.viewmodel.LoginRegisterViewModel
 import org.ttm.foodorderingappcmp.core.BOTTOM_NAVIGATION_ICON_SIZE
 import org.ttm.foodorderingappcmp.core.OUTLINE_TXT_FIELD_TXT_COLOR
 import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
 import org.ttm.foodorderingappcmp.core.TEXT_SMALL
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
-import org.ttm.foodorderingappcmp.features.orders.order_list.ui.FoodOrderingAppOrdersScreen
+import org.ttm.foodorderingappcmp.features.orders.order_list.ui.FoodOrderingAppOrdersScreenRoute
+import org.ttm.foodorderingappcmp.features.orders.order_list.viewmodel.OrderListViewModel
 import org.ttm.foodorderingappcmp.features.profile.setting.ui.FoodOrderingAppProfileScreen
 import org.ttm.foodorderingappcmp.features.restaurants.home.ui.FoodOrderingAppHomeRoute
-import org.ttm.foodorderingappcmp.features.restaurants.home.ui.FoodOrderingAppHomeScreen
 import org.ttm.foodorderingappcmp.features.restaurants.home.viewmodel.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeBottomNavigationScreen(selectedNavItem: String,
-                               onSelectedChange: (String) -> Unit,
-                               onTapOrder: (Long)-> Unit,
-                               onTapAbout: () -> Unit,
-                               onNavigateToLogin: ()-> Unit,
-                               onTapShoppingCart: () -> Unit) {
+fun HomeBottomNavigationScreen(
+    selectedNavItem: String,
+    onSelectedChange: (String) -> Unit,
+    onTapOrder: (Long) -> Unit,
+    onTapAbout: () -> Unit,
+    onNavigateToLogin: () -> Unit,
+    onTapShoppingCart: () -> Unit,
+) {
 
     val bottomNavigationItems = listOf(
         BottomNavigationItemData(name = "Home", icon = painterResource(Res.drawable.ic_home)),
@@ -50,7 +49,7 @@ fun HomeBottomNavigationScreen(selectedNavItem: String,
     Scaffold(
         containerColor = SCREEN_BG_COLOR,
         topBar = {
-           // HomeTopAppBar()
+            // HomeTopAppBar()
         },
         bottomBar = {
             NavigationBar(
@@ -86,39 +85,43 @@ fun HomeBottomNavigationScreen(selectedNavItem: String,
 
         },
     ) { innerPadding ->
-       when(selectedNavItem){
-           "Home" ->{
-               val homeViewModel = viewModel { HomeViewModel() }
-               FoodOrderingAppHomeRoute(viewModel = homeViewModel, onTapOrder = {
-                   restaurantId -> onTapOrder(restaurantId)
-               },
-                   onNavigateToLogin = {
-                       onNavigateToLogin()
-                   },
-                   onTapShoppingCart = {
-                       onTapShoppingCart()
-                   })
-           }
+        when (selectedNavItem) {
+            "Home" -> {
+                val homeViewModel = viewModel { HomeViewModel() }
 
-//               FoodOrderingAppHomeScreen(modifier = Modifier.padding(innerPadding),
-//               onTapOrder = { restaurantId -> onTapOrder(restaurantId)})
-           "Orders" -> FoodOrderingAppOrdersScreen(modifier = Modifier.padding(innerPadding),
-               onTapItem = {})
-           "Profile" -> FoodOrderingAppProfileScreen(modifier = Modifier.padding(innerPadding),
-               onTapLogout = {}
-               ,
-               onTapAbout = {
-                   onTapAbout()
-               })
-       }
+                FoodOrderingAppHomeRoute(
+                    homeViewModel = homeViewModel,
+                    onNavigateToRestaurantDetail = { restaurantId ->
+                        onTapOrder(restaurantId)
+                    },
+                    onNavigateToLogin = {
+                        onNavigateToLogin()
+                    },
+                    onNavigateToShoppingCart = {
+                        onTapShoppingCart()
+                    })
+            }
+
+            "Orders" -> {
+                val orderListViewModel = viewModel { OrderListViewModel() }
+                FoodOrderingAppOrdersScreenRoute(
+                    orderListViewModel = orderListViewModel,
+                    onTapItem = {})
+            }
+
+            "Profile" -> FoodOrderingAppProfileScreen(
+                onTapLogout = {},
+                onTapAbout = {
+                    onTapAbout()
+                })
+        }
     }
 }
 
 data class BottomNavigationItemData(
     val name: String,
-    val icon: Painter
+    val icon: Painter,
 )
-
 
 
 //@Preview

@@ -53,15 +53,15 @@ fun CartItemRow(
             )
 
             QuantitySelector(
-                itemQty = foodItemVO.qty,
+                itemQty = foodItemVO.quantity ?: 0,
                 onIncrease = { itemQty ->
                     onIncrease(foodItemVO.copy(
-                        qty = itemQty
+                        quantity = itemQty
                     ))
                 },
                 onDecrease = { itemQty ->
                     onDecrease(foodItemVO.copy(
-                        qty = itemQty
+                        quantity = itemQty
                     ))
                 }
             )

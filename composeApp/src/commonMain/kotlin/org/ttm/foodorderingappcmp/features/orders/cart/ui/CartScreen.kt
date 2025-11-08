@@ -37,6 +37,7 @@ import foodorderingappcmp.composeapp.generated.resources.place_order
 import foodorderingappcmp.composeapp.generated.resources.total
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.ttm.foodorderingappcmp.common.ui.DeliveryPaymentDialog
 import org.ttm.foodorderingappcmp.common.ui.ErrorAlertDialog
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppButton
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppTopAppBar
@@ -54,75 +55,62 @@ import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_2X
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
 import org.ttm.foodorderingappcmp.features.orders.cart.state.CartState
 import org.ttm.foodorderingappcmp.features.orders.cart.viewmodel.CartViewModel
+import org.ttm.foodorderingappcmp.features.orders.data.vos.DeliveryAddressVO
+import org.ttm.foodorderingappcmp.features.orders.data.vos.PaymentVO
 import org.ttm.foodorderingappcmp.features.restaurants.data.vos.FoodItemVO
 
 @Composable
 fun CartRoute(
     cartViewModel: CartViewModel,
     onTapBack: () -> Unit,
-    onTapPlaceOrder: () -> Unit,
+    onNavigateToCheckout: () -> Unit,
     onTapOrderNow: () -> Unit,
+    onNavigateToReviewOrder: () -> Unit,
 ) {
     val cartState by cartViewModel.cartState.collectAsStateWithLifecycle()
-
-    if (cartState.loading) {
-        LoadingDialog(
-            onDismissRequest = {}
-        )
-    }
-
-    if (cartState.message.isNotBlank() && !(cartState.dismissStatus)) {
-
-        ErrorAlertDialog(
-            showDialog = true,
-            title = "Error",
-            message = cartState.message,
-            onDismiss = {
-                cartViewModel.onDismissErrorAlertDialog()
-
-            }
-        )
-    }
-
-    if(cartState.showRemoveItemDialog){
-        AlertDialog(
-            onDismissRequest = { cartViewModel.onDismissRemoveItemDialog() },
-            title = { Text("Remove item?") },
-            text = { Text("Are you sure you want to remove this food from your cart?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        cartState.removeItem?.let {
-                            cartViewModel.deleteCart(it)
-                        }
-
-                    }
-                ) {
-                    Text("Remove")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { cartViewModel.onDismissRemoveItemDialog() }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-
 
     CartScreen(
         cartState = cartState,
         onTapBack = onTapBack,
-        onTapPlaceOrder = onTapPlaceOrder,
+        onTapPlaceOrder = {
+            cartViewModel.getDeliveryAddressesAndPaymentMethods()
+        },
         onTapOrderNow = onTapOrderNow,
-        onIncrease = {foodItemVO ->
+        onIncrease = { foodItemVO ->
             cartViewModel.onIncreaseItemQty(foodItemVO)
         },
-        onDecrease = {foodItemVO ->
+        onDecrease = { foodItemVO ->
             cartViewModel.onDecreaseItemQty(foodItemVO)
-        }
+        },
+        onDismissErrorAlertDialog = {
+            cartViewModel.onDismissErrorAlertDialog()
 
+        },
+        onDismissRemoveItemDialog = {
+            cartViewModel.onDismissRemoveItemDialog()
+
+        },
+        deleteCart = {
+            cartViewModel.deleteCart(it)
+        },
+        onTapConfirm = { deliveryAddressVO, paymentVO ->
+            cartViewModel.onTapConfirm(deliveryAddressVO, paymentVO)
+            onNavigateToReviewOrder()
+        },
+        onTapAddNew = {
+            cartViewModel.onDismissDeliveryPaymentDialog()
+            onNavigateToCheckout()
+        },
+        onDismissDeliveryPaymentDialog = {
+            cartViewModel.onDismissDeliveryPaymentDialog()
+        },
+        onNavigateToCheckout = {
+            cartViewModel.onDismissDeliveryPaymentDialog()
+            onNavigateToCheckout()
+        }
     )
+
+
 }
 
 @Composable
@@ -132,9 +120,104 @@ fun CartScreen(
     onTapPlaceOrder: () -> Unit,
     onTapOrderNow: () -> Unit,
     onIncrease: (FoodItemVO) -> Unit,
-    onDecrease: (FoodItemVO) -> Unit
+    onDecrease: (FoodItemVO) -> Unit,
+    onDismissErrorAlertDialog: () -> Unit,
+    onDismissRemoveItemDialog: () -> Unit,
+    deleteCart: (FoodItemVO) -> Unit,
+    onTapConfirm: (DeliveryAddressVO, PaymentVO) -> Unit,
+    onTapAddNew: () -> Unit,
+    onDismissDeliveryPaymentDialog: () -> Unit,
+    onNavigateToCheckout: () -> Unit,
 ) {
 
+    /*************Loading State*********************/
+    if (cartState.loading) {
+        LoadingDialog(
+            onDismissRequest = {}
+        )
+    }
+
+    /*************API Call Error State*********************/
+    if (cartState.message.isNotBlank() && (cartState.errorDialogShowStatus)) {
+
+        ErrorAlertDialog(
+            title = "Error",
+            message = cartState.message,
+            onDismiss = {
+                onDismissErrorAlertDialog()
+
+
+            }
+        )
+    }
+
+    /*************Shopping Cart Item Remove State*********************/
+    if (cartState.showRemoveItemDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                onDismissRemoveItemDialog()
+
+            },
+            title = { Text("Remove item?") },
+            text = { Text("Are you sure you want to remove this food from your cart?") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        cartState.removeItem?.let {
+                            deleteCart(it)
+
+                        }
+
+                    }
+                ) {
+                    Text("Remove")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    onDismissRemoveItemDialog()
+
+                }) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+
+    /*************Previously used Delivery Address and Payment Method Choose State*********************/
+    if (cartState.showDeliveryPaymentDialog != null && cartState.showDeliveryPaymentDialog) {
+        DeliveryPaymentDialog(
+            deliveryAddressAndPaymentListVO = cartState.deliveryAddressAndPaymentListVO,
+            onTapConfirm = { deliveryAddressVO, paymentVO ->
+                onTapConfirm(deliveryAddressVO, paymentVO)
+
+            },
+            onTapAddNew = {
+                onTapAddNew()
+
+
+            },
+            onTapBack = {
+                onDismissDeliveryPaymentDialog()
+
+            }
+        )
+    } else {
+
+        /************* No previously used delivery address or payment method *************/
+
+        cartState.deliveryAddressAndPaymentListVO?.let {
+            if (it.deliveryAddresses.isEmpty() &&
+                it.paymentMethods.isEmpty() &&
+                cartState.showDeliveryPaymentDialog == false
+            ) {
+                onNavigateToCheckout()
+
+            }
+        }
+    }
+
+    /****************** Shopping Cart Screen *******************************/
     Scaffold(
         containerColor = SCREEN_BG_COLOR,
         topBar = {
@@ -146,14 +229,13 @@ fun CartScreen(
         }
     ) { innerPadding ->
 
-        if(cartState.foodItemList.isEmpty())
-        {
+        if (cartState.foodItemList.isEmpty()) {
             EmptyCartSection(innerPadding, onTapOrderNow)
-        }else{
+        } else {
             CartListSection(
                 cartState = cartState,
-                innerPadding,
-                onTapPlaceOrder,
+                innerPadding = innerPadding,
+                onTapPlaceOrder = onTapPlaceOrder,
                 onIncrease = {
                     onIncrease(it)
                 },
@@ -165,7 +247,6 @@ fun CartScreen(
         }
 
 
-
     }
 }
 
@@ -175,7 +256,7 @@ private fun CartListSection(
     innerPadding: PaddingValues,
     onTapPlaceOrder: () -> Unit,
     onIncrease: (FoodItemVO) -> Unit,
-    onDecrease: (FoodItemVO) -> Unit
+    onDecrease: (FoodItemVO) -> Unit,
 ) {
     LazyColumn(
         modifier = Modifier.padding(innerPadding).fillMaxSize()
@@ -213,7 +294,7 @@ private fun CartListSection(
         item {
             cartState.foodItemList
             TotalPriceSection(
-                totalPrice = "$${cartState.foodItemList.sumOf { it.getItemPrice()}}"
+                totalPrice = "$${cartState.foodItemList.sumOf { it.getItemPrice() }}"
             )
         }
 
@@ -259,10 +340,10 @@ private fun EmptyCartSection(
             OutlinedButton(
                 onClick = { onTapOrderNow() },
                 shape = RoundedCornerShape(MARGIN_MEDIUM),
-                border = BorderStroke(1.dp, BUTTON_BG_COLOR), // outline color
+                border = BorderStroke(1.dp, BUTTON_BG_COLOR),
                 colors = ButtonDefaults.outlinedButtonColors(
-                    containerColor = Color.Transparent, // transparent background
-                    contentColor = BUTTON_BG_COLOR // text & icon color
+                    containerColor = Color.Transparent,
+                    contentColor = BUTTON_BG_COLOR
                 ),
                 modifier = Modifier.padding(
                     horizontal = MARGIN_MEDIUM_2,

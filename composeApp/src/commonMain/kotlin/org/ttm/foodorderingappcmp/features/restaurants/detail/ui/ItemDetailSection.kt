@@ -32,7 +32,6 @@ import coil3.compose.SubcomposeAsyncImage
 import foodorderingappcmp.composeapp.generated.resources.Res
 import foodorderingappcmp.composeapp.generated.resources.image_not_supported
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.ttm.foodorderingappcmp.common.ui.QtyActionType
 import org.ttm.foodorderingappcmp.common.ui.QuantityAdjustButton
 import org.ttm.foodorderingappcmp.common.ui.ShimmerBox
@@ -120,7 +119,7 @@ private fun BoxScope.AddToCartSection(
     foodItemVO: FoodItemVO,
     onTapAddToCart: (Boolean) -> Unit) {
 
-    if (foodItemVO.qty == 0) {
+    if (foodItemVO.quantity == 0) {
         QuantityAdjustButton(
             modifier = Modifier
                 .align(Alignment.BottomEnd)
@@ -143,7 +142,7 @@ private fun BoxScope.AddToCartSection(
         ) {
 
             Text(
-                foodItemVO.qty.toString(),
+                foodItemVO.quantity.toString(),
                 fontSize = TEXT_SMALL,
                 fontWeight = FontWeight.Bold
             )

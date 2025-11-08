@@ -43,8 +43,7 @@ import org.ttm.foodorderingappcmp.features.restaurants.data.vos.RestaurantVO
 
 @Composable
 fun RestaurantItemSection(
-    restaurantList: List<RestaurantVO>,
-    index: Int,
+    restaurantVO: RestaurantVO,
     onTapOrder: (Long)-> Unit
 ) {
     Column(
@@ -55,7 +54,7 @@ fun RestaurantItemSection(
     ) {
 
         //Restaurant Image
-        RestaurantImage(restaurantList, index, onTapOrder = { restaurantId ->
+        RestaurantImage(restaurantVO, onTapOrder = { restaurantId ->
             onTapOrder(restaurantId)
         })
 
@@ -69,14 +68,14 @@ fun RestaurantItemSection(
                     Arrangement.spacedBy(MARGIN_SMALL)) {
 
                 //Restaurant Name
-                RestaurantName(restaurantList, index)
+                RestaurantName(restaurantVO)
 
                 //RestaurantCategory
-                RestaurantCategories(restaurantList, index)
+                RestaurantCategories(restaurantVO)
 
                 //Average Rating
                 Text(
-                    "${restaurantList[index].averageRating} ⭐",
+                    "${restaurantVO.averageRating} ⭐",
                     fontSize = TEXT_SMALL
                 )
 
@@ -87,7 +86,7 @@ fun RestaurantItemSection(
             //Order
             FoodOrderingAppButton(
                 onTapButton = {
-                    onTapOrder(restaurantList[index].id)
+                    onTapOrder(restaurantVO.id)
                 },
                 modifier = Modifier.height(MARGIN_40),
                 btnText = stringResource(Res.string.order),
@@ -102,10 +101,9 @@ fun RestaurantItemSection(
 
 @Composable
 private fun RestaurantCategories(
-    restaurantList: List<RestaurantVO>,
-    index: Int,
+    restaurantVO: RestaurantVO
 ) {
-    val categories = restaurantList[index].restaurantCategories
+    val categories = restaurantVO.restaurantCategories
 
     categories?.let { category ->
         if (category.isEmpty()) return
@@ -124,11 +122,10 @@ private fun RestaurantCategories(
 
 @Composable
 private fun RestaurantName(
-    restaurantList: List<RestaurantVO>,
-    index: Int,
+    restaurantVO: RestaurantVO
 ) {
     Text(
-        restaurantList[index].name,
+        restaurantVO.name,
         fontSize = TEXT_REGULAR,
         fontWeight = FontWeight.Bold,
         color = TITLE_BLACK_COLOR
@@ -137,16 +134,14 @@ private fun RestaurantName(
 
 @Composable
 private fun RestaurantImage(
-    restaurantList: List<RestaurantVO>,
-    index: Int,
+    restaurantVO: RestaurantVO,
     onTapOrder: (Long) -> Unit
 ) {
     SubcomposeAsyncImage(
-        restaurantList[index].imageUrl,
+        restaurantVO.imageUrl,
         contentDescription = null,
         contentScale = ContentScale.Crop,
         loading = {
-            // CircularProgressIndicator(modifier = Modifier.size(30.dp))
             ShimmerBox(Modifier.fillMaxSize())
         },
         error = {
@@ -170,14 +165,7 @@ private fun RestaurantImage(
             .fillMaxWidth()
             .height(RESTAURANT_IMAGE_HEIGHT)
             .clip(shape = RoundedCornerShape(MARGIN_MEDIUM)).clickable{
-                onTapOrder(restaurantList[index].id)
+                onTapOrder(restaurantVO.id)
             }
     )
 }
-
-//data class RestaurantItem(
-//    val name: String,
-//    val image: Painter,
-//    val mealCategories: String,
-//    val reviewData: String
-//)

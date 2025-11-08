@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -17,7 +16,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,7 +40,7 @@ import foodorderingappcmp.composeapp.generated.resources.password
 import foodorderingappcmp.composeapp.generated.resources.terms_of_service
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.ttm.foodorderingappcmp.auth.ui.state.LoginRegisterState
 import org.ttm.foodorderingappcmp.auth.ui.viewmodel.LoginRegisterViewModel
 import org.ttm.foodorderingappcmp.common.ui.ErrorAlertDialog
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppButton
@@ -60,54 +58,37 @@ import org.ttm.foodorderingappcmp.core.utils.apiToken
 
 
 @Composable
-fun FoodOrderingAppRegisterRoute(viewModel: LoginRegisterViewModel,
-                                 onNavigateHome: ()-> Unit) {
+fun FoodOrderingAppRegisterRoute(
+    loginRegisterViewModel: LoginRegisterViewModel,
+    onNavigateToHome: () -> Unit,
+) {
 
-    val state by viewModel.state.collectAsStateWithLifecycle()
-
-    if(state.successStatus){
-        state.loginRegisterVO?.let {
-            apiToken = it.accessToken
-            onNavigateHome()
-        }
-    }
-    else{
-        if (state.message.isNotBlank() && !(state.dismissStatus)) {
-            ErrorAlertDialog(
-                showDialog = true,
-                title = "Error",
-                message = state.message,
-                onDismiss = {
-                    viewModel.onDismissErrorAlertDialog()
-                }
-            )
-        }
-    }
-
-    if (state.loading) {
-        LoadingDialog(
-            onDismissRequest = {}
-        )
-    }
-
+    val state by loginRegisterViewModel.state.collectAsStateWithLifecycle()
 
     FoodOrderingAppRegisterScreen(
-
+        state = state,
         onTapCreateAcc = { fullName, email, password ->
-
-            viewModel.onClickRegister(
+            loginRegisterViewModel.onClickRegister(
                 fullName = fullName,
                 email = email,
-                password = password)
-
-
-    })
+                password = password
+            )
+        },
+        onNavigateToHome = onNavigateToHome,
+        onDismissErrorAlertDialog = {
+            loginRegisterViewModel.onDismissErrorAlertDialog()
+        })
 }
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FoodOrderingAppRegisterScreen(onTapCreateAcc: (String, String, String) -> Unit) {
+fun FoodOrderingAppRegisterScreen(
+    state: LoginRegisterState,
+    onTapCreateAcc: (String, String, String) -> Unit,
+    onNavigateToHome: () -> Unit,
+    onDismissErrorAlertDialog: () -> Unit,
+) {
     var name by remember { mutableStateOf("") }
 
     var email by remember { mutableStateOf("") }
@@ -118,6 +99,35 @@ fun FoodOrderingAppRegisterScreen(onTapCreateAcc: (String, String, String) -> Un
     val passwordFocusRequester = remember { FocusRequester() }
 
 
+    /************ Loading *****************/
+    if (state.loading) {
+        LoadingDialog(
+            onDismissRequest = {}
+        )
+    }
+
+    /************ Login Success and Fail *****************/
+    if (state.loginStatus) {
+        state.loginRegisterVO?.let {
+            apiToken = it.accessToken
+            onNavigateToHome()
+        }
+    } else {
+        if (state.message.isNotBlank() && (state.errorDialogShowStatus)) {
+            ErrorAlertDialog(
+                // showDialog = true,
+                title = "Error",
+                message = state.message,
+                onDismiss = {
+                    onDismissErrorAlertDialog()
+
+                }
+            )
+        }
+    }
+
+
+    /******************** Register Screen *********************************/
     Scaffold(
         containerColor = SCREEN_BG_COLOR,
         topBar = {
@@ -146,8 +156,10 @@ fun FoodOrderingAppRegisterScreen(onTapCreateAcc: (String, String, String) -> Un
             )
         }) { innerPadding ->
 
-        Box(modifier = Modifier
-            .padding(innerPadding).fillMaxSize()){
+        Box(
+            modifier = Modifier
+                .padding(innerPadding).fillMaxSize()
+        ) {
             Column(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(MARGIN_MEDIUM_2)
@@ -162,6 +174,7 @@ fun FoodOrderingAppRegisterScreen(onTapCreateAcc: (String, String, String) -> Un
                     modifier = Modifier.padding(top = MARGIN_XLARGE)
                         .align(Alignment.CenterHorizontally)
                 )
+
                 //Name input section
                 FoodOrderingAppOutlineTxtField(
                     value = name,
@@ -177,8 +190,8 @@ fun FoodOrderingAppRegisterScreen(onTapCreateAcc: (String, String, String) -> Un
                     },
                     modifier = Modifier
                         .padding(horizontal = MARGIN_MEDIUM_2)
-                        .fillMaxWidth())
-
+                        .fillMaxWidth()
+                )
 
                 //Email input section
                 FoodOrderingAppOutlineTxtField(
@@ -195,7 +208,8 @@ fun FoodOrderingAppRegisterScreen(onTapCreateAcc: (String, String, String) -> Un
                     },
                     modifier = Modifier
                         .padding(horizontal = MARGIN_MEDIUM_2)
-                        .fillMaxWidth())
+                        .fillMaxWidth()
+                )
 
                 //Password input section
                 FoodOrderingAppOutlineTxtField(
@@ -211,7 +225,7 @@ fun FoodOrderingAppRegisterScreen(onTapCreateAcc: (String, String, String) -> Un
                     imeAction = ImeAction.Done,
                     onImeAction = {
                         focusManager.clearFocus()
-                        onTapCreateAcc(name,email,password)
+                        onTapCreateAcc(name, email, password)
                     },
                     modifier = Modifier
                         .padding(horizontal = MARGIN_MEDIUM_2)
@@ -221,10 +235,13 @@ fun FoodOrderingAppRegisterScreen(onTapCreateAcc: (String, String, String) -> Un
                 //Create Account Button Section
                 FoodOrderingAppButton(
                     onTapButton = {
-                        onTapCreateAcc(name,email,password)
+                        onTapCreateAcc(name, email, password)
                     },
                     modifier =
-                        Modifier.padding(horizontal = MARGIN_MEDIUM_2, vertical = MARGIN_CARD_MEDIUM_2)
+                        Modifier.padding(
+                            horizontal = MARGIN_MEDIUM_2,
+                            vertical = MARGIN_CARD_MEDIUM_2
+                        )
                             .fillMaxWidth().height(48.dp),
                     btnText = stringResource(Res.string.create_account),
                     fontSize = TEXT_REGULAR_2X
@@ -233,8 +250,7 @@ fun FoodOrderingAppRegisterScreen(onTapCreateAcc: (String, String, String) -> Un
 
             }
 
-
-            //title section
+            //terms of service section
             Text(
                 stringResource(Res.string.terms_of_service),
                 fontSize = TEXT_REGULAR_2X,
@@ -244,8 +260,6 @@ fun FoodOrderingAppRegisterScreen(onTapCreateAcc: (String, String, String) -> Un
                     .align(Alignment.BottomCenter)
             )
         }
-
-
 
 
     }

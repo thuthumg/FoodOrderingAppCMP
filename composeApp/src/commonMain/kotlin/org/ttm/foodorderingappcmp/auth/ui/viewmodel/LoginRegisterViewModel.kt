@@ -6,11 +6,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.ttm.foodorderingappcmp.auth.data.LoginRegisterRepository
-import org.ttm.foodorderingappcmp.auth.data.vos.LoginRegisterVO
+import org.ttm.foodorderingappcmp.auth.data.repository.LoginRegisterRepository
 import org.ttm.foodorderingappcmp.auth.ui.state.LoginRegisterState
 import org.ttm.foodorderingappcmp.core.network.Resource
-import org.ttm.foodorderingappcmp.core.utils.apiToken
 
 class LoginRegisterViewModel : ViewModel() {
 
@@ -36,15 +34,15 @@ class LoginRegisterViewModel : ViewModel() {
                 it.copy(
                     loading = false,
                     message = errorMessage,
-                    successStatus = false,
-                    dismissStatus = false,
+                    loginStatus = false,
+                    errorDialogShowStatus = true,
                 )
             }
             return
         }
 
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, dismissStatus = true) }
+            _state.update { it.copy(loading = true, errorDialogShowStatus = true) }
 
             when (val result = loginRegisterRepo.login(email, password)) {
                 is Resource.Success -> _state.update {
@@ -52,8 +50,8 @@ class LoginRegisterViewModel : ViewModel() {
                         loginRegisterVO = result.data,
                         loading = false,
                         message = "",
-                        successStatus = true,
-                        dismissStatus = true,
+                        loginStatus = true,
+                        errorDialogShowStatus = false,
                     )
                 }
 
@@ -61,12 +59,10 @@ class LoginRegisterViewModel : ViewModel() {
                     it.copy(
                         loading = false,
                         message = result.message,
-                        successStatus = false,
-                        dismissStatus = false,
+                        loginStatus = false,
+                        errorDialogShowStatus = true,
                     )
                 }
-
-                Resource.Loading -> _state.update { it.copy(loading = true, dismissStatus = true) }
             }
         }
 
@@ -88,15 +84,15 @@ class LoginRegisterViewModel : ViewModel() {
                 it.copy(
                     loading = false,
                     message = errorMessage,
-                    successStatus = false,
-                    dismissStatus = false
+                    loginStatus = false,
+                    errorDialogShowStatus = true
                 )
             }
             return
         }
 
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, dismissStatus = true) }
+            _state.update { it.copy(loading = true, errorDialogShowStatus = false) }
 
             when (val result = loginRegisterRepo.register(
                 email = email,
@@ -108,8 +104,8 @@ class LoginRegisterViewModel : ViewModel() {
                         loginRegisterVO = result.data,
                         loading = false,
                         message = "",
-                        successStatus = true,
-                        dismissStatus = true
+                        loginStatus = true,
+                        errorDialogShowStatus = false
                     )
                 }
 
@@ -117,19 +113,17 @@ class LoginRegisterViewModel : ViewModel() {
                     it.copy(
                         loading = false,
                         message = result.message,
-                        successStatus = false,
-                        dismissStatus = false
+                        loginStatus = false,
+                        errorDialogShowStatus = true
                     )
                 }
-
-                Resource.Loading -> _state.update { it.copy(loading = true, dismissStatus = true) }
             }
         }
     }
 
     fun onDismissErrorAlertDialog() {
         _state.update {
-            it.copy(dismissStatus = true)
+            it.copy(errorDialogShowStatus = false)
         }
     }
 
@@ -140,8 +134,8 @@ class LoginRegisterViewModel : ViewModel() {
                 it.copy(
                     loading = false,
                     message ="",
-                    successStatus = false,
-                    dismissStatus = true
+                    loginStatus = false,
+                    errorDialogShowStatus = false
                 )
             }
         }

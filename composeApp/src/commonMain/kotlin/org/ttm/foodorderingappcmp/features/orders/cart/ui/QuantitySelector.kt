@@ -38,7 +38,7 @@ fun QuantitySelector(
             modifier = Modifier.size(32.dp),
             type = QtyActionType.Decrease,
             onClick = {
-               onDecrease(itemQty-1)
+                onDecrease(itemQty-1)
 
             }
         )

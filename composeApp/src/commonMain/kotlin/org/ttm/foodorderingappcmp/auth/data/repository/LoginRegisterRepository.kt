@@ -1,4 +1,4 @@
-package org.ttm.foodorderingappcmp.auth.data
+package org.ttm.foodorderingappcmp.auth.data.repository
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
@@ -33,35 +33,40 @@ object LoginRegisterRepository {
                 }
 
                 Resource.Success(vo)
-                } catch (e: Exception) {
-                    Resource.Error(e.message  ?: "Login failed. Please try again.")
-                }
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Login failed. Please try again.")
             }
-
-
-    suspend fun register(email: String, fullName: String, password: String) :Resource<LoginRegisterVO> =   withContext(Dispatchers.IO) {
-        try {
-            // Call API
-            val response = loginRegisterService.register(email= email, fullName = fullName,password= password)
-            val vo = response?.toVO()
-                ?: return@withContext Resource.Error("Empty register response")
-
-            launch {
-                response.toVO().let {
-                    appDatabase.userDao().deleteAllUser()
-                    appDatabase.userDao().insertUser(it)
-                }
-            }
-
-            Resource.Success(vo)
-        } catch (e: Exception) {
-            Resource.Error(e.message  ?: "Registration failed. Please try again.")
         }
-    }
 
-    suspend fun getAllUserData():  List<LoginRegisterVO> {
-        return appDatabase.userDao().getAllUsers()
-    }
+
+    suspend fun register(email: String, fullName: String, password: String) : Resource<LoginRegisterVO> =
+        withContext(Dispatchers.IO) {
+            try {
+                // Call API
+                val response = loginRegisterService.register(
+                    email = email,
+                    fullName = fullName,
+                    password = password
+                )
+                val vo = response?.toVO()
+                    ?: return@withContext Resource.Error("Empty register response")
+
+                launch {
+                    response.toVO().let {
+                        appDatabase.userDao().deleteAllUser()
+                        appDatabase.userDao().insertUser(it)
+                    }
+                }
+
+                Resource.Success(vo)
+            } catch (e: Exception) {
+                Resource.Error(e.message ?: "Registration failed. Please try again.")
+            }
+        }
+
+//    suspend fun getAllUserData():  List<LoginRegisterVO> {
+//        return appDatabase.userDao().getAllUsers()
+//    }
 
     suspend fun deleteAllUserData(){
         appDatabase.userDao().deleteAllUser()

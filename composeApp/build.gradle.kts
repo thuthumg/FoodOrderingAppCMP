@@ -56,6 +56,7 @@ kotlin {
             implementation(libs.sqlite.bundled)
 
             implementation(libs.bundles.coil)
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.7.1")
         }
         iosMain.dependencies{
             implementation(libs.ktor.client.darwin)

@@ -47,7 +47,7 @@ import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_3X
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
 
 @Composable
-fun FoodOrderingAppProfileScreen(modifier: Modifier,onTapLogout: () -> Unit,onTapAbout:() -> Unit) {
+fun FoodOrderingAppProfileScreen(onTapLogout: () -> Unit,onTapAbout:() -> Unit) {
     Scaffold(
         containerColor = SCREEN_BG_COLOR,
         topBar = {
@@ -172,9 +172,9 @@ private fun ProfileItemRow(str: String, icon: ImageVector,onTapItem: () -> Unit)
         )
     }
 }
-
-@Preview
-@Composable
-fun FoodOrderingAppProfileScreenPreview() {
-    FoodOrderingAppProfileScreen(modifier = Modifier, onTapLogout = {}, onTapAbout = {})
-}
+//
+//@Preview
+//@Composable
+//fun FoodOrderingAppProfileScreenPreview() {
+//    FoodOrderingAppProfileScreen(modifier = Modifier, onTapLogout = {}, onTapAbout = {})
+//}

@@ -28,9 +28,11 @@ import org.ttm.foodorderingappcmp.features.forgot_password.ForgotPasswordScreen
 import org.ttm.foodorderingappcmp.features.forgot_password.ResetPasswordScreen
 import org.ttm.foodorderingappcmp.features.orders.cart.ui.CartRoute
 import org.ttm.foodorderingappcmp.features.orders.cart.viewmodel.CartViewModel
-import org.ttm.foodorderingappcmp.features.orders.checkout.CheckoutScreen
+import org.ttm.foodorderingappcmp.features.orders.checkout.ui.CheckoutRoute
+import org.ttm.foodorderingappcmp.features.orders.checkout.viewmodel.CheckoutViewModel
 import org.ttm.foodorderingappcmp.features.orders.confirm_order.ConfirmOrderScreen
-import org.ttm.foodorderingappcmp.features.orders.order_review.OrderReviewScreen
+import org.ttm.foodorderingappcmp.features.orders.order_review.ui.OrderReviewRoute
+import org.ttm.foodorderingappcmp.features.orders.order_review.viewmodel.OrderReviewViewModel
 import org.ttm.foodorderingappcmp.features.profile.about.AboutScreen
 import org.ttm.foodorderingappcmp.features.restaurants.detail.ui.RestaurantDetailRoute
 import org.ttm.foodorderingappcmp.features.restaurants.home_navigation.ui.HomeBottomNavigationScreen
@@ -48,13 +50,13 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
         typography = FoodOrderingAppTypography()
     ) {
 
+        /******************Auto Login Section**********************/
         val appViewModel = viewModel { AppViewModel() }
         val state by appViewModel.state.collectAsStateWithLifecycle()
 
         LaunchedEffect(Unit) {
             appViewModel.autoLogin()
         }
-
 
         val startDestinationPoint =
             if (state.loginStatus) {
@@ -64,16 +66,20 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
             }
 
 
+        /******************NavHost**********************/
+
         NavHost(
             navController = navController,
             startDestination =  startDestinationPoint
         ) {
+
+            /******** Login *************/
             composable<NavRoutes.Login> {
                 val loginRegisterViewModel = viewModel { LoginRegisterViewModel() }
 
                 FoodOrderingAppLoginScreenRoute(
                     loginRegisterViewModel,
-                    onNavigateHome = {
+                    onNavigateToHome = {
                         navController.navigate(NavRoutes.Home("Home")) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
@@ -95,11 +101,13 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
                 )
             }
 
+
+            /******** Register *************/
             composable<NavRoutes.Register> {
                 val loginRegisterViewModel = viewModel { LoginRegisterViewModel() }
                 FoodOrderingAppRegisterRoute(
-                    viewModel = loginRegisterViewModel,
-                    onNavigateHome = {
+                    loginRegisterViewModel = loginRegisterViewModel,
+                    onNavigateToHome = {
                         navController.navigate(NavRoutes.Home("Home")) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
@@ -110,9 +118,12 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
 
             }
 
+
+            /******** Home *************/
             composable<NavRoutes.Home> { backStackEntry ->
                 val args = backStackEntry.toRoute<NavRoutes.Home>()
                 var selectedNavItem by remember { mutableStateOf(args.selectedPage) }
+
                 val loginRegisterViewModel = viewModel { LoginRegisterViewModel() }
 
                 HomeBottomNavigationScreen(
@@ -142,6 +153,7 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
                 )
             }
 
+            /******** Restaurant Detail *************/
             composable<NavRoutes.RestaurantDetail> { backStackEntry ->
                 val args = backStackEntry.toRoute<NavRoutes.RestaurantDetail>()
 
@@ -159,6 +171,7 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
 
             }
 
+            /******** Add to Cart *************/
             composable<NavRoutes.Cart> {
                 val cartViewModel =  viewModel { CartViewModel() }
                 CartRoute(
@@ -166,7 +179,7 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
                     onTapBack = {
                         navController.navigateUp()
                     },
-                    onTapPlaceOrder = {
+                    onNavigateToCheckout = {
                         navController.navigate(NavRoutes.Checkout)
                     },
                     onTapOrderNow = {
@@ -175,38 +188,44 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
                                 inclusive = true
                             }
                         }
-                    })
-//                CartScreen(
-//                    onTapBack = {
-//                        navController.navigateUp()
-//                    },
-//                    onTapPlaceOrder = {
-//                        navController.navigate(NavRoutes.Checkout)
-//                    },
-//                    onTapOrderNow = {}
-//                )
-            }
-
-            composable<NavRoutes.Checkout> {
-                CheckoutScreen(
-                    onTapBack = {
-                        navController.navigateUp()
                     },
-                    onTapPlaceOrder = {
+                    onNavigateToReviewOrder = {
                         navController.navigate(NavRoutes.OrderReview)
                     })
+
             }
 
-            composable<NavRoutes.OrderReview> {
-                OrderReviewScreen(
+            /******** Checkout *************/
+            composable<NavRoutes.Checkout> {
+                val checkoutViewModel =  viewModel { CheckoutViewModel() }
+                CheckoutRoute(
+                    checkoutViewModel = checkoutViewModel,
                     onTapBack = {
                         navController.navigateUp()
                     },
-                    onTapConfirmOrder = {
-                        navController.navigate(NavRoutes.OrderConfirm)
-                    })
+                    onNavigateToOrderReview = {
+                        navController.navigate(NavRoutes.OrderReview)
+                    }
+                )
+
             }
 
+            /******** OrderReview *************/
+            composable<NavRoutes.OrderReview> {
+                val orderReviewViewModel = viewModel { OrderReviewViewModel() }
+                OrderReviewRoute(
+                    viewModel = orderReviewViewModel,
+                    onTapBack = {
+                        navController.navigateUp()
+                    //navController.popBackStack()
+                },
+                    onNavigateToOrderConfirmation = {
+                        navController.navigate(NavRoutes.OrderConfirm)
+                    })
+
+            }
+
+            /******** OrderConfirm *************/
             composable<NavRoutes.OrderConfirm> {
                 ConfirmOrderScreen(
                     onTapBack = {
@@ -221,6 +240,7 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
                     })
             }
 
+            /******** Forgot Password *************/
             composable<NavRoutes.ForgotPassword> {
                 ForgotPasswordScreen(
                     onTapBack = {
@@ -232,6 +252,7 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
                 )
             }
 
+            /******** Reset Password *************/
             composable<NavRoutes.ResetPassword> {
                 ResetPasswordScreen(
                     onTapBack = {
@@ -247,6 +268,7 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
                 )
             }
 
+            /******** Profile *************/
             composable<NavRoutes.Profile> {
                 ForgotPasswordScreen(
                     onTapBack = {
@@ -258,6 +280,7 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
                 )
             }
 
+            /******** About *************/
             composable<NavRoutes.About> {
                 AboutScreen(
                     onTapBack = {

@@ -1,4 +1,4 @@
-package org.ttm.foodorderingappcmp.features.orders.checkout
+package org.ttm.foodorderingappcmp.features.orders.checkout.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import foodorderingappcmp.composeapp.generated.resources.Res
 import foodorderingappcmp.composeapp.generated.resources.card_number
 import foodorderingappcmp.composeapp.generated.resources.checkout
@@ -37,10 +38,11 @@ import foodorderingappcmp.composeapp.generated.resources.payment_details
 import foodorderingappcmp.composeapp.generated.resources.place_order
 import foodorderingappcmp.composeapp.generated.resources.save_for_future_use
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.ttm.foodorderingappcmp.common.ui.ErrorAlertDialog
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppButton
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppOutlineTxtField
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppTopAppBar
+import org.ttm.foodorderingappcmp.common.ui.LoadingDialog
 import org.ttm.foodorderingappcmp.core.BUTTON_SWITCH_COLOR
 import org.ttm.foodorderingappcmp.core.MARGIN_LARGE
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM
@@ -49,11 +51,58 @@ import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_2X
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_3X
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
+import org.ttm.foodorderingappcmp.features.orders.checkout.state.CheckoutState
+import org.ttm.foodorderingappcmp.features.orders.checkout.viewmodel.CheckoutViewModel
 
+@Composable
+fun CheckoutRoute(
+    checkoutViewModel: CheckoutViewModel,
+    onTapBack: () -> Unit,
+    onNavigateToOrderReview: () -> Unit,
+) {
+
+    val checkoutState by checkoutViewModel.state.collectAsStateWithLifecycle()
+
+    CheckoutScreen(
+        state = checkoutState,
+        onTapBack = {
+            onTapBack()
+        },
+        onTapPlaceOrder = { cardNumber, expireDate, cvv, nameOnCard, deliveryAddress ->
+            checkoutViewModel.addDeliveryAddressAndPayment(
+                cardNumber,
+                expireDate,
+                cvv,
+                nameOnCard,
+                deliveryAddress
+            )
+        },
+        onNavigateToOrderReview = {
+            onNavigateToOrderReview()
+        },
+        onDismissErrorAlertDialog = {
+            checkoutViewModel.onDismissErrorAlertDialog()
+        }
+    )
+
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CheckoutScreen(onTapBack: () -> Unit, onTapPlaceOrder: () -> Unit) {
+fun CheckoutScreen(
+    state: CheckoutState,
+    onTapBack: () -> Unit,
+    onTapPlaceOrder: (
+        cardNumber: String,
+        expireDate: String,
+        cvv: String,
+        nameOnCard: String,
+        deliveryAddress: String,
+    ) -> Unit,
+    onNavigateToOrderReview: () -> Unit,
+    onDismissErrorAlertDialog: () -> Unit
+
+) {
 
     var cardNumber by remember { mutableStateOf("") }
     var mm_yy by remember { mutableStateOf("") }
@@ -63,6 +112,36 @@ fun CheckoutScreen(onTapBack: () -> Unit, onTapPlaceOrder: () -> Unit) {
     var saveForFutureUse by remember { mutableStateOf(false) }
 
 
+    /*************Loading State*********************/
+    if (state.loading) {
+        LoadingDialog(
+            onDismissRequest = {}
+        )
+    }
+
+
+    /*************API Call Success State*********************/
+    if(state.checkoutApiStatus){
+        state.deliveryAddressAndPaymentVO?.let {
+            onNavigateToOrderReview()
+        }
+    }
+
+
+        /*************API Call Error State*********************/
+        if (state.message.isNotBlank() && (state.errorDialogShowStatus)) {
+            ErrorAlertDialog(
+                title = "Error",
+                message = state.message,
+                onDismiss = {
+                    onDismissErrorAlertDialog()
+                }
+            )
+        }
+
+
+
+    /***************** Checkout Screen ***********************/
     Scaffold(
         containerColor = SCREEN_BG_COLOR,
         topBar = {
@@ -207,7 +286,13 @@ fun CheckoutScreen(onTapBack: () -> Unit, onTapPlaceOrder: () -> Unit) {
             //Log in Button Section
             FoodOrderingAppButton(
                 onTapButton = {
-                    onTapPlaceOrder()
+                    onTapPlaceOrder(
+                        cardNumber,
+                        mm_yy,
+                        cvv,
+                        nameOnCard,
+                        fullAddress
+                    )
                 },
                 modifier =
                     Modifier
@@ -228,7 +313,7 @@ fun CheckoutScreen(onTapBack: () -> Unit, onTapPlaceOrder: () -> Unit) {
 }
 
 @Composable
-private fun SaveForFutureUse(checked: Boolean,onCheckedChange: () -> Unit) {
+private fun SaveForFutureUse(checked: Boolean, onCheckedChange: () -> Unit) {
 
     Row(
         modifier = Modifier.padding(horizontal = MARGIN_MEDIUM_2),
@@ -247,7 +332,7 @@ private fun SaveForFutureUse(checked: Boolean,onCheckedChange: () -> Unit) {
         Switch(
             checked = checked,
             onCheckedChange = {
-               onCheckedChange()
+                onCheckedChange()
             },
             colors = SwitchDefaults.colors(
                 checkedThumbColor = Color.White,
@@ -261,8 +346,8 @@ private fun SaveForFutureUse(checked: Boolean,onCheckedChange: () -> Unit) {
     }
 }
 
-@Preview
-@Composable
-fun CheckoutScreenPreview() {
-    CheckoutScreen(onTapBack = {}, onTapPlaceOrder = {})
-}
+//@Preview
+//@Composable
+//fun CheckoutScreenPreview() {
+//    CheckoutScreen(onTapBack = {}, onTapPlaceOrder = {})
+//}

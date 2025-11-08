@@ -8,6 +8,5 @@ data class RestaurantDetailState (
     val loading: Boolean = false,
     val message: String = "",
     val showViewMyCart: Boolean = false,
-    val successStatus: Boolean = false,
-    val dismissStatus: Boolean = true
+    val errorDialogShowStatus: Boolean = false
 )

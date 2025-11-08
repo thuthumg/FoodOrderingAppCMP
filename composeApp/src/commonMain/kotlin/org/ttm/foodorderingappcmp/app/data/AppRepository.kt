@@ -4,8 +4,6 @@ import org.ttm.foodorderingappcmp.auth.data.vos.LoginRegisterVO
 import org.ttm.foodorderingappcmp.core.persistence.AppDatabaseProvider
 
 object AppRepository {
-
-
     val appDatabase = AppDatabaseProvider.appDatabase
 
     suspend fun getAllUserData():  List<LoginRegisterVO> {

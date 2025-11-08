@@ -9,12 +9,10 @@ import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM
 
 @Composable
 fun ErrorAlertDialog(
-    showDialog: Boolean,
     title: String,
     message: String,
     onDismiss: () -> Unit
 ) {
-    if (showDialog) {
         AlertDialog(
             onDismissRequest = onDismiss,
             title = { Text(text = title) },
@@ -26,5 +24,5 @@ fun ErrorAlertDialog(
             },
             shape = RoundedCornerShape(MARGIN_MEDIUM)
         )
-    }
+
 }

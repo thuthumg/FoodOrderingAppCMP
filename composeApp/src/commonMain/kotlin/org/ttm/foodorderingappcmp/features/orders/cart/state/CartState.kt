@@ -1,5 +1,6 @@
 package org.ttm.foodorderingappcmp.features.orders.cart.state
 
+import org.ttm.foodorderingappcmp.features.orders.data.vos.DeliveryAddressAndPaymentListVO
 import org.ttm.foodorderingappcmp.features.restaurants.data.vos.FoodItemVO
 
 data class CartState(
@@ -7,7 +8,9 @@ data class CartState(
     val loading: Boolean = false,
     val message: String = "",
     val successStatus: Boolean = false,
-    val dismissStatus: Boolean = true,
+    val errorDialogShowStatus: Boolean = false,
     val showRemoveItemDialog: Boolean = false,
-    val removeItem: FoodItemVO? = null
+    val removeItem: FoodItemVO? = null,
+    val showDeliveryPaymentDialog: Boolean?= null,
+    val deliveryAddressAndPaymentListVO: DeliveryAddressAndPaymentListVO? = null
 )

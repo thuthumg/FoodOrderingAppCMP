@@ -15,87 +15,103 @@ import org.ttm.foodorderingappcmp.common.ui.ErrorAlertDialog
 import org.ttm.foodorderingappcmp.common.ui.LoadingDialog
 import org.ttm.foodorderingappcmp.core.MARGIN_CARD_MEDIUM_2
 import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
-import org.ttm.foodorderingappcmp.features.restaurants.data.vos.RestaurantVO
+import org.ttm.foodorderingappcmp.features.restaurants.home.state.HomeState
 import org.ttm.foodorderingappcmp.features.restaurants.home.viewmodel.HomeViewModel
 import org.ttm.foodorderingappcmp.features.restaurants.home_navigation.ui.HomeTopAppBar
 
 @Composable
-fun FoodOrderingAppHomeRoute(viewModel: HomeViewModel,
-                             onTapOrder : (Long) -> Unit,
-                             onNavigateToLogin: () -> Unit,
-                             onTapShoppingCart: () -> Unit) {
+fun FoodOrderingAppHomeRoute(
+    homeViewModel: HomeViewModel,
+    onNavigateToRestaurantDetail: (Long) -> Unit,
+    onNavigateToLogin: () -> Unit,
+    onNavigateToShoppingCart: () -> Unit,
+) {
 
 
-    val homeState by viewModel.homeState.collectAsStateWithLifecycle()
+    val homeState by homeViewModel.homeState.collectAsStateWithLifecycle()
 
-    if (homeState.loading) {
+    FoodOrderingAppHomeScreen(
+        state = homeState,
+        onNavigateToRestaurantDetail = { restaurantId ->
+            onNavigateToRestaurantDetail(restaurantId)
+        },
+        onNavigateToShoppingCart = {
+            onNavigateToShoppingCart()
+        },
+        onDismissErrorAlertDialog = {
+            homeViewModel.onDismissErrorAlertDialog()
+        },
+        onNavigateToLogin = onNavigateToLogin
+    )
+}
+
+@Composable
+fun FoodOrderingAppHomeScreen(
+    state: HomeState,
+    onNavigateToRestaurantDetail: (Long) -> Unit,
+    onNavigateToShoppingCart: () -> Unit,
+    onDismissErrorAlertDialog: () -> Unit,
+    onNavigateToLogin: () -> Unit,
+) {
+
+
+    /************ Loading *****************/
+    if (state.loading) {
         LoadingDialog(
             onDismissRequest = {}
         )
     }
 
-    if(homeState.goToLogin){
+    /************ Go To Login *****************/
+    if (!(state.loginStatus)) {
         onNavigateToLogin()
     }
 
-     if (homeState.message.isNotBlank() && !(homeState.dismissStatus)) {
+    /************* API Call Error State *********************/
+    if (state.message.isNotBlank() && (state.errorDialogShowStatus)) {
+        ErrorAlertDialog(
+            title = "Error",
+            message = state.message,
+            onDismiss = {
+                onDismissErrorAlertDialog()
 
-            ErrorAlertDialog(
-                showDialog = true,
-                title = "Error",
-                message = homeState.message,
-                onDismiss = {
-                    viewModel.onDismissErrorAlertDialog()
-
-                }
-            )
-        }
-
+            }
+        )
+    }
 
 
-    FoodOrderingAppHomeScreen(
-        restaurantList = homeState.restaurantVO,
-        onTapOrder = { restaurantId ->
-            onTapOrder(restaurantId)
-    },
-        onTapShoppingCart = {
-            onTapShoppingCart()
-        })
-}
-@Composable
-fun FoodOrderingAppHomeScreen(restaurantList: List<RestaurantVO>, onTapOrder: (Long) -> Unit,
-                              onTapShoppingCart:() -> Unit) {
-
+    /*************** Restaurant List Screen **********************/
     Scaffold(
         containerColor = SCREEN_BG_COLOR,
         topBar = {
             HomeTopAppBar(onTapShoppingCart = {
-                onTapShoppingCart()
+                onNavigateToShoppingCart()
             })
         },
         modifier = Modifier.fillMaxSize()
-        ) { innerPadding ->
+    ) { innerPadding ->
+
         LazyColumn(
-            modifier = Modifier.padding(top = innerPadding.calculateTopPadding(),
-                bottom = innerPadding.calculateBottomPadding()),
+            modifier = Modifier.padding(
+                top = innerPadding.calculateTopPadding(),
+                bottom = innerPadding.calculateBottomPadding()
+            ),
             verticalArrangement = Arrangement.spacedBy(MARGIN_CARD_MEDIUM_2),
             contentPadding = PaddingValues(bottom = 88.dp)
-        ){
-            items(restaurantList.size){
-                RestaurantItemSection(restaurantList = restaurantList,
-                    index = it,
+        ) {
+            //Restaurant List
+            items(state.restaurantList.size) { index ->
+                RestaurantItemSection(
+                    restaurantVO = state.restaurantList[index],
                     onTapOrder = { restaurantId ->
-                        onTapOrder(restaurantId)
-
+                        onNavigateToRestaurantDetail(restaurantId)
                     })
             }
         }
     }
 
 
-
 }
-
 
 
 //@Preview

@@ -72,7 +72,6 @@ object RestaurantRepository {
     }
 
     suspend fun insertShoppingCart(foodItemVO: FoodItemVO){
-
         appDatabase.cartDao().insertCart(foodItemVO)
 
     }

@@ -6,6 +6,6 @@ data class LoginRegisterState (
     val loginRegisterVO: LoginRegisterVO? = null,
     val loading: Boolean = false,
     val message: String = "",
-    val successStatus: Boolean = false,
-    val dismissStatus: Boolean = true,
+    val loginStatus: Boolean = false,
+    val errorDialogShowStatus: Boolean = false,
 )

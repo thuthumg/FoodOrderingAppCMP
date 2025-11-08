@@ -2,7 +2,6 @@ package org.ttm.foodorderingappcmp.features.restaurants.data.vos
 
 import androidx.room.ColumnInfo
 import androidx.room.Entity
-import androidx.room.OnConflictStrategy
 import androidx.room.PrimaryKey
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -34,16 +33,17 @@ data class FoodItemVO(
 
     @ColumnInfo("created_at")
     @SerialName("created_at")
-    val createdAt: String,
+    val createdAt: String? = null,
 
     @ColumnInfo("updated_at")
     @SerialName("updated_at")
-    val updatedAt: String,
+    val updatedAt: String? = null,
 
     @ColumnInfo("quantity")
-    val qty: Int = 0
+    @SerialName("quantity")
+    val quantity: Int? = 0
 ){
     fun getItemPrice(): Double {
-        return price * qty
+        return price * (quantity ?: 0)
     }
 }
