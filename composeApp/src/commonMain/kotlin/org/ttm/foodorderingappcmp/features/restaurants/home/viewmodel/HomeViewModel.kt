@@ -25,7 +25,7 @@ class HomeViewModel: ViewModel() {
     fun getAllRestaurants(){
         viewModelScope.launch {
 
-            _state.update { it.copy(loading = true, errorDialogShowStatus = false) }
+            _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
 
             when(val result = restaurantRepository.getAllRestaurants()){
                 is Resource.Error -> _state.update {
@@ -53,7 +53,7 @@ class HomeViewModel: ViewModel() {
     }
     fun onDismissErrorAlertDialog() {
         _state.update {
-            it.copy(errorDialogShowStatus = false, loginStatus = false)
+            it.copy(errorDialogShowStatus = false, loginStatus = false, message = "")
         }
     }
 }

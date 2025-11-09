@@ -12,14 +12,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -37,8 +35,8 @@ import foodorderingappcmp.composeapp.generated.resources.place_order
 import foodorderingappcmp.composeapp.generated.resources.total
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
+import org.ttm.foodorderingappcmp.common.ui.CommonAlertDialog
 import org.ttm.foodorderingappcmp.common.ui.DeliveryPaymentDialog
-import org.ttm.foodorderingappcmp.common.ui.ErrorAlertDialog
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppButton
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppTopAppBar
 import org.ttm.foodorderingappcmp.common.ui.LoadingDialog
@@ -140,46 +138,29 @@ fun CartScreen(
     /*************API Call Error State*********************/
     if (cartState.message.isNotBlank() && (cartState.errorDialogShowStatus)) {
 
-        ErrorAlertDialog(
+        CommonAlertDialog(
             title = "Error",
             message = cartState.message,
-            onDismiss = {
+            onConfirm = {
                 onDismissErrorAlertDialog()
-
-
-            }
-        )
+            })
     }
 
     /*************Shopping Cart Item Remove State*********************/
     if (cartState.showRemoveItemDialog) {
-        AlertDialog(
-            onDismissRequest = {
+        CommonAlertDialog(
+            title ="Remove item?",
+            message = "Are you sure you want to remove this food from your cart?",
+            confirmText = "Remove",
+            dismissText = "Cancel",
+            onConfirm = {
+                cartState.removeItem?.let {
+                    deleteCart(it)
+                }
+            },
+            onDismiss = {
                 onDismissRemoveItemDialog()
 
-            },
-            title = { Text("Remove item?") },
-            text = { Text("Are you sure you want to remove this food from your cart?") },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        cartState.removeItem?.let {
-                            deleteCart(it)
-
-                        }
-
-                    }
-                ) {
-                    Text("Remove")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = {
-                    onDismissRemoveItemDialog()
-
-                }) {
-                    Text("Cancel")
-                }
             }
         )
     }

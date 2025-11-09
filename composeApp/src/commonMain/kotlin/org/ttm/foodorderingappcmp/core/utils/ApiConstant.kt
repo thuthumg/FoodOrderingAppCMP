@@ -17,4 +17,8 @@ const val GET_DELIVERY_ADDRESS_AND_PAYMENT_METHODS = "/api/get-delivery-addresse
 const val SUBMIT_ORDER = "/api/submit-order"
 
 const val  GET_ORDERS_FOR_USER ="/api/get-orders-for-user"
+
+const val FORGET_PASSWORD_CHECK_EMAIL ="/api/forget-password-check-email"
+
+const val FORGET_PASSWORD = "/api/forget-password"
 var apiToken = ""

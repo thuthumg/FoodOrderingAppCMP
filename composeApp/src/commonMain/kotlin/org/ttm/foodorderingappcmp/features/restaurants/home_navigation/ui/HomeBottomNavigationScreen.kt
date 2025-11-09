@@ -25,7 +25,8 @@ import org.ttm.foodorderingappcmp.core.TEXT_SMALL
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
 import org.ttm.foodorderingappcmp.features.orders.order_list.ui.FoodOrderingAppOrdersScreenRoute
 import org.ttm.foodorderingappcmp.features.orders.order_list.viewmodel.OrderListViewModel
-import org.ttm.foodorderingappcmp.features.profile.setting.ui.FoodOrderingAppProfileScreen
+import org.ttm.foodorderingappcmp.features.profile.setting.ui.FoodOrderingAppProfileRoute
+import org.ttm.foodorderingappcmp.features.profile.viewmodel.ProfileViewModel
 import org.ttm.foodorderingappcmp.features.restaurants.home.ui.FoodOrderingAppHomeRoute
 import org.ttm.foodorderingappcmp.features.restaurants.home.viewmodel.HomeViewModel
 
@@ -38,6 +39,7 @@ fun HomeBottomNavigationScreen(
     onTapAbout: () -> Unit,
     onNavigateToLogin: () -> Unit,
     onTapShoppingCart: () -> Unit,
+    onNavigateToLogout: () -> Unit
 ) {
 
     val bottomNavigationItems = listOf(
@@ -59,10 +61,10 @@ fun HomeBottomNavigationScreen(
                     NavigationBarItem(
                         selected = selectedNavItem == it.name,
                         colors = NavigationBarItemDefaults.colors(
-                            selectedIconColor = TITLE_BLACK_COLOR,
-                            selectedTextColor = TITLE_BLACK_COLOR,
-                            unselectedIconColor = OUTLINE_TXT_FIELD_TXT_COLOR,
-                            unselectedTextColor = OUTLINE_TXT_FIELD_TXT_COLOR,
+                            selectedIconColor = OUTLINE_TXT_FIELD_TXT_COLOR,//TITLE_BLACK_COLOR,
+                            selectedTextColor = OUTLINE_TXT_FIELD_TXT_COLOR,
+                            unselectedIconColor = TITLE_BLACK_COLOR,
+                            unselectedTextColor = TITLE_BLACK_COLOR,
                             indicatorColor = Color.Transparent
                         ),
                         icon = {
@@ -109,11 +111,14 @@ fun HomeBottomNavigationScreen(
                     onTapItem = {})
             }
 
-            "Profile" -> FoodOrderingAppProfileScreen(
-                onTapLogout = {},
-                onTapAbout = {
-                    onTapAbout()
-                })
+            "Profile" -> {
+                val profileViewModel = viewModel { ProfileViewModel() }
+                FoodOrderingAppProfileRoute(
+                    profileViewModel,
+                    onNavigateToLogout = onNavigateToLogout,
+                    onTapAbout = onTapAbout
+                )
+            }
         }
     }
 }

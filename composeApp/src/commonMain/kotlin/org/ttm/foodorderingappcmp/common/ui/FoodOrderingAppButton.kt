@@ -8,6 +8,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import foodorderingappcmp.composeapp.generated.resources.Res
@@ -26,7 +27,8 @@ fun FoodOrderingAppButton(
     btnText: String,
     fontSize: TextUnit,
     buttonContainerColor : Color = BUTTON_BG_COLOR,
-    txtColor: Color = Color.White
+    txtColor: Color = Color.White,
+    fontWeight: FontWeight = FontWeight.Normal
 ) {
     Button(
         onClick = {
@@ -42,7 +44,9 @@ fun FoodOrderingAppButton(
             btnText,
             fontSize = fontSize,
             textAlign = TextAlign.Center,
-            color = txtColor
+            color = txtColor,
+            fontWeight = fontWeight
+
 
         )
     }

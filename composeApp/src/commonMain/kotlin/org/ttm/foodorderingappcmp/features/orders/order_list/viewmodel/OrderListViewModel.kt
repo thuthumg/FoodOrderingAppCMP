@@ -26,7 +26,7 @@ class OrderListViewModel : ViewModel() {
     fun getAllOrderList() {
         viewModelScope.launch {
 
-            _state.update { it.copy(loading = true, errorDialogShowStatus = false) }
+            _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
 
             when (val result = orderListRepository.getOrdersForUser()) {
                 is Resource.Error -> _state.update {
@@ -53,7 +53,7 @@ class OrderListViewModel : ViewModel() {
 
     fun onDismissErrorAlertDialog() {
         _state.update {
-            it.copy(loading = false, errorDialogShowStatus = false)
+            it.copy(loading = false, errorDialogShowStatus = false, message = "")
         }
     }
 }

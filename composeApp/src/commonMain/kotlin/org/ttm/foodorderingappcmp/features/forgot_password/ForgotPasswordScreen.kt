@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import foodorderingappcmp.composeapp.generated.resources.Res
 import foodorderingappcmp.composeapp.generated.resources.continue_txt
 import foodorderingappcmp.composeapp.generated.resources.email
@@ -27,21 +28,79 @@ import foodorderingappcmp.composeapp.generated.resources.forgot_password_desc
 import foodorderingappcmp.composeapp.generated.resources.forgot_password_title
 import foodorderingappcmp.composeapp.generated.resources.forgot_password_txt
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.ttm.foodorderingappcmp.common.ui.CommonAlertDialog
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppButton
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppOutlineTxtField
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppTopAppBar
+import org.ttm.foodorderingappcmp.common.ui.LoadingDialog
 import org.ttm.foodorderingappcmp.core.MARGIN_LARGE
-import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM_2
 import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_2X
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_3X
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
+import org.ttm.foodorderingappcmp.core.utils.apiToken
+import org.ttm.foodorderingappcmp.features.forgot_password.ui.state.ForgotPasswordState
+import org.ttm.foodorderingappcmp.features.forgot_password.ui.viewmodel.ForgotPasswordViewModel
 
 @Composable
-fun ForgotPasswordScreen(onTapBack: () -> Unit,onTapContinue: ()-> Unit) {
+fun ForgotPasswordRoute(forgotPasswordViewModel: ForgotPasswordViewModel,
+                        onTapBack: () -> Unit,
+                        onNavigateToResetPassword: (String) -> Unit) {
+
+    val forgotPasswordState by forgotPasswordViewModel.forgotPasswordState.collectAsStateWithLifecycle()
+
+    ForgotPasswordScreen(
+        forgotPasswordState = forgotPasswordState,
+        onTapBack = {
+            onTapBack()
+        },
+        onTapContinue = { email ->
+           forgotPasswordViewModel.checkEmail(email)
+        },
+        onDismissErrorAlertDialog = {
+            forgotPasswordViewModel.onDismissErrorAlertDialog()
+        },
+        onNavigateToResetPassword = { email->
+            onNavigateToResetPassword(email)
+            
+        }
+    )
+}
+@Composable
+fun ForgotPasswordScreen(forgotPasswordState: ForgotPasswordState,
+                         onTapBack: () -> Unit,
+                         onTapContinue: (String)-> Unit,
+                         onDismissErrorAlertDialog: () -> Unit,
+                         onNavigateToResetPassword: (String) -> Unit) {
     var email by remember{ mutableStateOf("") }
+
+    /************* Loading State *********************/
+    if (forgotPasswordState.loading) {
+        LoadingDialog(
+            onDismissRequest = {}
+        )
+    }
+
+    /************* API Call Error State *********************/
+    if (forgotPasswordState.message.isNotBlank() && (forgotPasswordState.errorDialogShowStatus)) {
+
+        CommonAlertDialog(
+            title = "Error",
+            message = forgotPasswordState.message,
+            onConfirm = {
+                onDismissErrorAlertDialog()
+
+            }
+        )
+    }
+    /************* API Call Success State *********************/
+    forgotPasswordState.checkEmailResponse?.let {
+        apiToken = it.resetPasswordToken
+        onNavigateToResetPassword(it.user.email)
+    }
+
+    /************* Forgot Password Screen *********************/
     Scaffold(
         containerColor = SCREEN_BG_COLOR,
         topBar = {
@@ -99,7 +158,7 @@ fun ForgotPasswordScreen(onTapBack: () -> Unit,onTapContinue: ()-> Unit) {
             //Continue Button Section
             FoodOrderingAppButton(
                 onTapButton = {
-                    onTapContinue()
+                    onTapContinue(email)
                 },
                 modifier =
                     Modifier
@@ -118,8 +177,8 @@ fun ForgotPasswordScreen(onTapBack: () -> Unit,onTapContinue: ()-> Unit) {
     }
 }
 
-@Preview
-@Composable
-fun ForgotPasswordScreenPreview() {
-    ForgotPasswordScreen(onTapBack = {}, onTapContinue = {})
-}
+//@Preview
+//@Composable
+//fun ForgotPasswordScreenPreview() {
+//    ForgotPasswordScreen(onTapBack = {}, onTapContinue = {})
+//}

@@ -40,7 +40,7 @@ import foodorderingappcmp.composeapp.generated.resources.view_my_cart
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.ttm.foodorderingappcmp.common.ui.ErrorAlertDialog
+import org.ttm.foodorderingappcmp.common.ui.CommonAlertDialog
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppButton
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppTopAppBar
 import org.ttm.foodorderingappcmp.common.ui.LoadingDialog
@@ -111,10 +111,10 @@ fun RestaurantDetailScreen(
 
     /************* API Call Error ********************/
     if (restaurantDetailState.message.isNotBlank() && (restaurantDetailState.errorDialogShowStatus)) {
-        ErrorAlertDialog(
+        CommonAlertDialog(
             title = "Error",
             message = restaurantDetailState.message,
-            onDismiss = {
+            onConfirm = {
                 onDismissErrorAlertDialog()
             }
         )

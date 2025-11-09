@@ -17,7 +17,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +38,7 @@ import foodorderingappcmp.composeapp.generated.resources.review_order
 import foodorderingappcmp.composeapp.generated.resources.total
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.ttm.foodorderingappcmp.common.ui.ErrorAlertDialog
+import org.ttm.foodorderingappcmp.common.ui.CommonAlertDialog
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppButton
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppTopAppBar
 import org.ttm.foodorderingappcmp.common.ui.LoadingDialog
@@ -94,10 +93,10 @@ fun OrderReviewScreen(
     /************* API Call Error State *********************/
     if (orderReviewState.message.isNotBlank() && (orderReviewState.errorDialogShowStatus)) {
 
-        ErrorAlertDialog(
+        CommonAlertDialog(
             title = "Error",
             message = orderReviewState.message,
-            onDismiss = {
+            onConfirm = {
                 onDismissErrorAlertDialog()
 
             }

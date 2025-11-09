@@ -42,7 +42,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.ttm.foodorderingappcmp.auth.ui.state.LoginRegisterState
 import org.ttm.foodorderingappcmp.auth.ui.viewmodel.LoginRegisterViewModel
-import org.ttm.foodorderingappcmp.common.ui.ErrorAlertDialog
+import org.ttm.foodorderingappcmp.common.ui.CommonAlertDialog
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppButton
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppOutlineTxtField
 import org.ttm.foodorderingappcmp.common.ui.LoadingDialog
@@ -109,18 +109,16 @@ fun FoodOrderingAppRegisterScreen(
     /************ Login Success and Fail *****************/
     if (state.loginStatus) {
         state.loginRegisterVO?.let {
-            apiToken = it.accessToken
+            apiToken = it.accessToken ?: ""
             onNavigateToHome()
         }
     } else {
         if (state.message.isNotBlank() && (state.errorDialogShowStatus)) {
-            ErrorAlertDialog(
-                // showDialog = true,
+            CommonAlertDialog(
                 title = "Error",
                 message = state.message,
-                onDismiss = {
+                onConfirm = {
                     onDismissErrorAlertDialog()
-
                 }
             )
         }

@@ -14,6 +14,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import androidx.room.RoomDatabase
+import kotlinx.coroutines.delay
 import kotlinx.serialization.Serializable
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.ttm.foodorderingappcmp.app.viewmodel.AppViewModel
@@ -24,8 +25,12 @@ import org.ttm.foodorderingappcmp.core.FoodOrderingAppTypography
 import org.ttm.foodorderingappcmp.core.persistence.AppDatabase
 import org.ttm.foodorderingappcmp.core.persistence.AppDatabaseProvider
 import org.ttm.foodorderingappcmp.core.utils.apiToken
+import org.ttm.foodorderingappcmp.features.forgot_password.ForgotPasswordRoute
 import org.ttm.foodorderingappcmp.features.forgot_password.ForgotPasswordScreen
+import org.ttm.foodorderingappcmp.features.forgot_password.ResetPasswordRoute
 import org.ttm.foodorderingappcmp.features.forgot_password.ResetPasswordScreen
+import org.ttm.foodorderingappcmp.features.forgot_password.ui.viewmodel.ForgotPasswordViewModel
+import org.ttm.foodorderingappcmp.features.forgot_password.ui.viewmodel.ResetPasswordViewModel
 import org.ttm.foodorderingappcmp.features.orders.cart.ui.CartRoute
 import org.ttm.foodorderingappcmp.features.orders.cart.viewmodel.CartViewModel
 import org.ttm.foodorderingappcmp.features.orders.checkout.ui.CheckoutRoute
@@ -37,6 +42,7 @@ import org.ttm.foodorderingappcmp.features.profile.about.AboutScreen
 import org.ttm.foodorderingappcmp.features.restaurants.detail.ui.RestaurantDetailRoute
 import org.ttm.foodorderingappcmp.features.restaurants.home_navigation.ui.HomeBottomNavigationScreen
 import org.ttm.foodorderingappcmp.features.restaurants.detail.viewmodel.RestaurantDetailViewModel
+import org.ttm.foodorderingappcmp.splash.SplashScreen
 
 @Composable
 @Preview
@@ -46,24 +52,38 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
 
     val navController = rememberNavController()
 
+
+
+    /******************Auto Login Section**********************/
+    // ViewModel
+    val appViewModel: AppViewModel = viewModel()
+
+    // Collect state from ViewModel
+    val state by appViewModel.state.collectAsStateWithLifecycle()
+    var startDestinationPoint: Any by remember { mutableStateOf(NavRoutes.Splash) }
+
+    LaunchedEffect(Unit){
+        delay(3000)
+        startDestinationPoint = if(state.loginStatus) NavRoutes.Home("Home") else NavRoutes.Login
+    }
+
+//    val startDestinationState = remember {
+//        mutableStateOf<NavRoutes>(NavRoutes.Splash as NavRoutes)
+//    }
+//
+//    LaunchedEffect(Unit) {
+//        delay(3000)
+//        startDestinationState.value =
+//            if (state.loginStatus) NavRoutes.Home("Home")
+//            else NavRoutes.Login
+//    }
+//
+//    val startDestination = startDestinationState.value
+
+
     MaterialTheme(
         typography = FoodOrderingAppTypography()
     ) {
-
-        /******************Auto Login Section**********************/
-        val appViewModel = viewModel { AppViewModel() }
-        val state by appViewModel.state.collectAsStateWithLifecycle()
-
-        LaunchedEffect(Unit) {
-            appViewModel.autoLogin()
-        }
-
-        val startDestinationPoint =
-            if (state.loginStatus) {
-                NavRoutes.Home("Home")
-            } else {
-                NavRoutes.Login
-            }
 
 
         /******************NavHost**********************/
@@ -72,6 +92,11 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
             navController = navController,
             startDestination =  startDestinationPoint
         ) {
+            /******** Splash *************/
+
+            composable<NavRoutes.Splash>{
+                SplashScreen()
+            }
 
             /******** Login *************/
             composable<NavRoutes.Login> {
@@ -149,6 +174,16 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
                     },
                     onTapShoppingCart = {
                         navController.navigate(NavRoutes.Cart)
+                    },
+                    onNavigateToLogout = {
+                        apiToken = ""
+                        loginRegisterViewModel.clearUserData()
+
+                        navController.navigate(NavRoutes.Login) {
+                            popUpTo(NavRoutes.Home::class) {
+                                inclusive = true
+                            }
+                        }
                     }
                 )
             }
@@ -217,7 +252,6 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
                     viewModel = orderReviewViewModel,
                     onTapBack = {
                         navController.navigateUp()
-                    //navController.popBackStack()
                 },
                     onNavigateToOrderConfirmation = {
                         navController.navigate(NavRoutes.OrderConfirm)
@@ -242,23 +276,35 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
 
             /******** Forgot Password *************/
             composable<NavRoutes.ForgotPassword> {
-                ForgotPasswordScreen(
+
+                val viewModel = viewModel{ ForgotPasswordViewModel() }
+
+                ForgotPasswordRoute(
+                    forgotPasswordViewModel = viewModel,
                     onTapBack = {
                         navController.navigateUp()
                     },
-                    onTapContinue = {
-                        navController.navigate(NavRoutes.ResetPassword)
+                    onNavigateToResetPassword = { email ->
+                        navController.navigate(NavRoutes.ResetPassword(email))
                     }
                 )
+
+
             }
 
             /******** Reset Password *************/
-            composable<NavRoutes.ResetPassword> {
-                ResetPasswordScreen(
+            composable<NavRoutes.ResetPassword> { backStackEntry ->
+                val args = backStackEntry.toRoute<NavRoutes.ResetPassword>()
+
+                val viewModel = viewModel { ResetPasswordViewModel(args.email)}
+
+
+                ResetPasswordRoute(
+                    resetPasswordViewModel = viewModel,
                     onTapBack = {
                         navController.navigateUp()
                     },
-                    onTapResetPassword = {
+                    onNavigateToLogin = {
                         navController.navigate(NavRoutes.Login) {
                             popUpTo(navController.graph.startDestinationId) {
                                 inclusive = true
@@ -266,18 +312,19 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
                         }
                     }
                 )
+
             }
 
             /******** Profile *************/
             composable<NavRoutes.Profile> {
-                ForgotPasswordScreen(
-                    onTapBack = {
-                        navController.navigateUp()
-                    },
-                    onTapContinue = {
-
-                    }
-                )
+//                ForgotPasswordScreen(
+//                    onTapBack = {
+//                        navController.navigateUp()
+//                    },
+//                    onTapContinue = {
+//
+//                    }
+//                )
             }
 
             /******** About *************/
@@ -299,6 +346,9 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
 
 @Serializable
 sealed class NavRoutes {
+
+    @Serializable
+    object Splash
 
     @Serializable
     object Login
@@ -328,7 +378,7 @@ sealed class NavRoutes {
     object ForgotPassword
 
     @Serializable
-    object ResetPassword
+    data class ResetPassword(val email: String)
 
     @Serializable
     object Profile

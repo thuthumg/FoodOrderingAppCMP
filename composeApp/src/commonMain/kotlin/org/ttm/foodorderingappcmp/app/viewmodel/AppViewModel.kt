@@ -17,12 +17,15 @@ class AppViewModel: ViewModel() {
     private val _state = MutableStateFlow(AppState())
     val state = _state.asStateFlow()
 
+    init {
+        autoLogin()
+    }
     fun autoLogin() = viewModelScope.launch {
         try {
 
             val user = appRepository.getAllUserData().firstOrNull()
 
-            if (user != null && user.accessToken.isNotBlank()) {
+            if (user != null && user.accessToken?.isNotBlank() == true) {
                 //success
                 apiToken = user.accessToken
                 _state.update {
@@ -35,7 +38,7 @@ class AppViewModel: ViewModel() {
                 _state.update {
                     it.copy(
                        loginStatus = false,
-                        userData = null
+                        userData = null,
                     )
                 }
             }

@@ -41,3 +41,6 @@ val TEXT_XXLARGE = 28.sp
 val TEXT_BIG = 32.sp
 
 val ACTION_BAR_HEIGHT = 88.dp
+
+val LOGO_WIDTH = 180.dp
+val LOGO_HEIGHT = 185.dp

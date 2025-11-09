@@ -9,13 +9,14 @@ import kotlinx.coroutines.launch
 import org.ttm.foodorderingappcmp.auth.data.repository.LoginRegisterRepository
 import org.ttm.foodorderingappcmp.auth.ui.state.LoginRegisterState
 import org.ttm.foodorderingappcmp.core.network.Resource
+import org.ttm.foodorderingappcmp.core.utils.emailRegex
 
 class LoginRegisterViewModel : ViewModel() {
 
     val loginRegisterRepo = LoginRegisterRepository
     private val _state = MutableStateFlow(LoginRegisterState())
     val state = _state.asStateFlow()
-    val emailRegex = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")
+
     val passwordLength = 6
 
 
@@ -42,7 +43,7 @@ class LoginRegisterViewModel : ViewModel() {
         }
 
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, errorDialogShowStatus = true) }
+            _state.update { it.copy(loading = true, errorDialogShowStatus = true, message = "") }
 
             when (val result = loginRegisterRepo.login(email, password)) {
                 is Resource.Success -> _state.update {
@@ -92,7 +93,7 @@ class LoginRegisterViewModel : ViewModel() {
         }
 
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, errorDialogShowStatus = false) }
+            _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
 
             when (val result = loginRegisterRepo.register(
                 email = email,
@@ -123,7 +124,7 @@ class LoginRegisterViewModel : ViewModel() {
 
     fun onDismissErrorAlertDialog() {
         _state.update {
-            it.copy(errorDialogShowStatus = false)
+            it.copy(errorDialogShowStatus = false, message = "")
         }
     }
 

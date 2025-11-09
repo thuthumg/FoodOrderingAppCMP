@@ -33,6 +33,6 @@ data class LoginRegisterVO(
 
     @ColumnInfo("access_token")
     @SerialName("access_token")
-    val accessToken: String,
+    val accessToken: String? = "",
 )
 

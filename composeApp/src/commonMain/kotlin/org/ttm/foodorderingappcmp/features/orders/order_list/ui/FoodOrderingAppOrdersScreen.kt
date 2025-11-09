@@ -10,7 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.ttm.foodorderingappcmp.common.ui.ErrorAlertDialog
+import org.ttm.foodorderingappcmp.common.ui.CommonAlertDialog
 import org.ttm.foodorderingappcmp.common.ui.LoadingDialog
 import org.ttm.foodorderingappcmp.core.ACTION_BAR_HEIGHT
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM
@@ -51,10 +51,10 @@ fun FoodOrderingAppOrdersScreen(
 
     /************* API Call Error State *********************/
     if (orderListState.message.isNotBlank() && (orderListState.errorDialogShowStatus)) {
-        ErrorAlertDialog(
+        CommonAlertDialog(
             title = "Error",
             message = orderListState.message,
-            onDismiss = {
+            onConfirm = {
                 onDismissErrorAlertDialog()
             }
         )

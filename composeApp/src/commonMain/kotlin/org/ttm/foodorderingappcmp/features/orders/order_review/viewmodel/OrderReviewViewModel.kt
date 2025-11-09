@@ -25,7 +25,8 @@ class OrderReviewViewModel: ViewModel() {
     val orderReviewState = _state.onStart {
         _state.update {
             it.copy(
-                orderSubmitStatus = false
+                orderSubmitStatus = false,
+                message = ""
             )
         }
     }.stateIn(
@@ -42,7 +43,7 @@ class OrderReviewViewModel: ViewModel() {
 
     fun getAllCartFromDb(){
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, errorDialogShowStatus = false) }
+            _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
 
             when(val result = cartRepository.getAllCartFromDb()){
                 is Resource.Error -> _state.update {
@@ -68,7 +69,7 @@ class OrderReviewViewModel: ViewModel() {
     fun getDeliveryAddressAndPaymentFromDb(){
         viewModelScope.launch {
 
-            _state.update { it.copy(loading = true, errorDialogShowStatus = false) }
+            _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
 
             when(val result =   orderReviewRepository.getDeliveryAddressAndPaymentFromDb()){
                 is Resource.Error -> _state.update {
@@ -92,13 +93,13 @@ class OrderReviewViewModel: ViewModel() {
 
     fun onDismissErrorAlertDialog() {
         _state.update {
-            it.copy(loading = false, errorDialogShowStatus = false)
+            it.copy(loading = false, errorDialogShowStatus = false, message = "")
         }
     }
 
     fun submitOrder(paymentId: Long, deliveryAddressId: Long, foodItemList: List<FoodItemVO>) {
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, errorDialogShowStatus = false) }
+            _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
             when(val result =  orderReviewRepository.submitOrder(paymentId,deliveryAddressId,foodItemList)){
                 is Resource.Error -> _state.update {
                     it.copy(

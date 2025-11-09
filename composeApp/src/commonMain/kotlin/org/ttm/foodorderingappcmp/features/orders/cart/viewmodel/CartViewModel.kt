@@ -33,7 +33,7 @@ class CartViewModel: ViewModel() {
     fun getAllCartList(){
         viewModelScope.launch {
 
-            _state.update { it.copy(loading = true, errorDialogShowStatus = false) }
+            _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
 
             when(val result = cartRepository.getAllCartFromDb()){
                 is Resource.Error -> _state.update {
@@ -59,13 +59,13 @@ class CartViewModel: ViewModel() {
 
     fun onDismissErrorAlertDialog() {
         _state.update {
-            it.copy(loading = false, errorDialogShowStatus = false)
+            it.copy(loading = false, errorDialogShowStatus = false, message = "")
         }
     }
 
     fun onDecreaseItemQty(foodItemVO: FoodItemVO) {
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, errorDialogShowStatus = false) }
+            _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
 
             if ((foodItemVO.quantity ?: 0)>= 1) {
                 cartRepository.insertCart(foodItemVO)
@@ -73,6 +73,7 @@ class CartViewModel: ViewModel() {
             } else {
                 _state.update {
                     it.copy(
+                        message = "",
                         loading = false,
                         showRemoveItemDialog = true,
                         removeItem = foodItemVO)
@@ -83,7 +84,8 @@ class CartViewModel: ViewModel() {
     fun onDismissRemoveItemDialog() {
         _state.update {
             it.copy(loading = false,
-                showRemoveItemDialog = false)
+                showRemoveItemDialog = false,
+                message = "")
         }
     }
 
@@ -91,7 +93,8 @@ class CartViewModel: ViewModel() {
         viewModelScope.launch {
             _state.update {
                 it.copy(loading = false,
-                    showRemoveItemDialog = false)
+                    showRemoveItemDialog = false,
+                    message = "")
             }
             cartRepository.deleteCart(foodItemVO)
             getAllCartList()
@@ -101,7 +104,9 @@ class CartViewModel: ViewModel() {
 
     fun onIncreaseItemQty(foodItemVO: FoodItemVO) {
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, errorDialogShowStatus = false) }
+            _state.update { it.copy(loading = true,
+                errorDialogShowStatus = false,
+                message = "") }
 
             cartRepository.insertCart(foodItemVO)
             getAllCartList()
@@ -113,7 +118,8 @@ class CartViewModel: ViewModel() {
         viewModelScope.launch {
 
             _state.update { it.copy(loading = true,
-                errorDialogShowStatus = false
+                errorDialogShowStatus = false,
+                message = ""
             )
             }
 
@@ -161,7 +167,8 @@ class CartViewModel: ViewModel() {
             _state.update {
                 it.copy(loading = false,
                     showDeliveryPaymentDialog = null,
-                    deliveryAddressAndPaymentListVO = null)
+                    deliveryAddressAndPaymentListVO = null,
+                    message = "")
             }
         }
 
@@ -181,7 +188,8 @@ class CartViewModel: ViewModel() {
             _state.update {
                 it.copy(loading = false,
                     showDeliveryPaymentDialog = null,
-                    deliveryAddressAndPaymentListVO = null)
+                    deliveryAddressAndPaymentListVO = null,
+                    message = "")
             }
 
 

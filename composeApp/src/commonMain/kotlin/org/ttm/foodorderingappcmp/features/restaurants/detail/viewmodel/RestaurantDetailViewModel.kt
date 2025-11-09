@@ -74,7 +74,7 @@ class RestaurantDetailViewModel(val restaurantId: Long) : ViewModel(){
 
     fun getRestaurantDetails() = viewModelScope.launch {
 
-        _state.update { it.copy(loading = true, errorDialogShowStatus = false) }
+        _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
 
         try {
             supervisorScope {
@@ -166,7 +166,7 @@ class RestaurantDetailViewModel(val restaurantId: Long) : ViewModel(){
 
     fun onDismissErrorAlertDialog() {
         _state.update {
-            it.copy(errorDialogShowStatus = false)
+            it.copy(errorDialogShowStatus = false, message = "")
         }
     }
 

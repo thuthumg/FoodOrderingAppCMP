@@ -11,7 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.ttm.foodorderingappcmp.common.ui.ErrorAlertDialog
+import org.ttm.foodorderingappcmp.common.ui.CommonAlertDialog
 import org.ttm.foodorderingappcmp.common.ui.LoadingDialog
 import org.ttm.foodorderingappcmp.core.MARGIN_CARD_MEDIUM_2
 import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
@@ -69,10 +69,10 @@ fun FoodOrderingAppHomeScreen(
 
     /************* API Call Error State *********************/
     if (state.message.isNotBlank() && (state.errorDialogShowStatus)) {
-        ErrorAlertDialog(
+        CommonAlertDialog(
             title = "Error",
             message = state.message,
-            onDismiss = {
+            onConfirm = {
                 onDismissErrorAlertDialog()
 
             }

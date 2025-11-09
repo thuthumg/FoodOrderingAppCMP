@@ -7,3 +7,5 @@ val universalJsonParser = Json{
     explicitNulls = false
     prettyPrint = true
 }
+
+val emailRegex = Regex("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")

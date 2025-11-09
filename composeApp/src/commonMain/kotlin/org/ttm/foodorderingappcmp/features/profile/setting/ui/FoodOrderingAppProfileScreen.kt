@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -16,12 +17,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import foodorderingappcmp.composeapp.generated.resources.Res
 import foodorderingappcmp.composeapp.generated.resources.about
 import foodorderingappcmp.composeapp.generated.resources.change_password
@@ -33,6 +37,7 @@ import foodorderingappcmp.composeapp.generated.resources.profile
 import foodorderingappcmp.composeapp.generated.resources.settings
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.ttm.foodorderingappcmp.common.ui.CommonAlertDialog
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppButton
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppTopAppBar
 import org.ttm.foodorderingappcmp.core.MARGIN_LARGE
@@ -45,9 +50,47 @@ import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_2X
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_3X
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
+import org.ttm.foodorderingappcmp.features.profile.state.ProfileState
+import org.ttm.foodorderingappcmp.features.profile.viewmodel.ProfileViewModel
 
 @Composable
-fun FoodOrderingAppProfileScreen(onTapLogout: () -> Unit,onTapAbout:() -> Unit) {
+fun FoodOrderingAppProfileRoute(profileViewModel: ProfileViewModel,
+                                onNavigateToLogout: () -> Unit,
+                                onTapAbout: () -> Unit) {
+
+    val state  by profileViewModel.state.collectAsStateWithLifecycle()
+
+    FoodOrderingAppProfileScreen(
+        profileState = state,
+        onTapLogout = {
+            profileViewModel.onDismissErrorAlertDialog() },
+        onTapAbout = onTapAbout,
+        onNavigateToLogout = onNavigateToLogout
+    )
+
+}
+@Composable
+fun FoodOrderingAppProfileScreen(
+    profileState: ProfileState,
+    onTapLogout: () -> Unit,
+    onTapAbout:() -> Unit,
+    onNavigateToLogout: () -> Unit) {
+
+    /************** Logout Status *********************/
+    if(profileState.logoutStatus){
+        CommonAlertDialog(
+            title = "",
+            message = "Are you sure you want to log out? All locally stored app data will be lost.",
+            onConfirm = {
+                onNavigateToLogout()
+            }
+        )
+    }
+
+
+
+
+
     Scaffold(
         containerColor = SCREEN_BG_COLOR,
         topBar = {
@@ -69,7 +112,7 @@ fun FoodOrderingAppProfileScreen(onTapLogout: () -> Unit,onTapAbout:() -> Unit) 
 
                 //title section
                 Text(
-                    "Sophia Carter",
+                    profileState.userName,
                     fontSize = TEXT_REGULAR_3X,
                     color = TITLE_BLACK_COLOR,
                     fontWeight = FontWeight.Bold,
@@ -78,7 +121,7 @@ fun FoodOrderingAppProfileScreen(onTapLogout: () -> Unit,onTapAbout:() -> Unit) 
 
                 //title section
                 Text(
-                    "sophia.carter@email.com",
+                    profileState.email,
                     fontSize = TEXT_REGULAR_2X,
                     color = OUTLINE_TXT_FIELD_TXT_COLOR,
                     modifier = Modifier
@@ -140,11 +183,12 @@ fun FoodOrderingAppProfileScreen(onTapLogout: () -> Unit,onTapAbout:() -> Unit) 
                             vertical = MARGIN_LARGE
                         )
                         .fillMaxWidth()
-                        .height(48.dp).align(Alignment.BottomCenter),
+                        .height(48.dp).align(Alignment.BottomCenter).offset(y = (-88).dp),
                 btnText = stringResource(Res.string.logout),
                 fontSize = TEXT_REGULAR_2X,
                 buttonContainerColor = Color(242, 232, 232),
-                txtColor = TITLE_BLACK_COLOR
+                txtColor = TITLE_BLACK_COLOR,
+                fontWeight = FontWeight.Bold
 
             )
         }
@@ -172,9 +216,11 @@ private fun ProfileItemRow(str: String, icon: ImageVector,onTapItem: () -> Unit)
         )
     }
 }
-//
+
 //@Preview
 //@Composable
 //fun FoodOrderingAppProfileScreenPreview() {
-//    FoodOrderingAppProfileScreen(modifier = Modifier, onTapLogout = {}, onTapAbout = {})
+//    val profileViewModel = viewModel { ProfileViewModel() }
+//    val state  by profileViewModel.state.collectAsStateWithLifecycle()
+//    FoodOrderingAppProfileScreen( state ,onTapLogout = {}, onTapAbout = {})
 //}

@@ -38,7 +38,7 @@ import foodorderingappcmp.composeapp.generated.resources.payment_details
 import foodorderingappcmp.composeapp.generated.resources.place_order
 import foodorderingappcmp.composeapp.generated.resources.save_for_future_use
 import org.jetbrains.compose.resources.stringResource
-import org.ttm.foodorderingappcmp.common.ui.ErrorAlertDialog
+import org.ttm.foodorderingappcmp.common.ui.CommonAlertDialog
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppButton
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppOutlineTxtField
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppTopAppBar
@@ -130,10 +130,10 @@ fun CheckoutScreen(
 
         /*************API Call Error State*********************/
         if (state.message.isNotBlank() && (state.errorDialogShowStatus)) {
-            ErrorAlertDialog(
+            CommonAlertDialog(
                 title = "Error",
                 message = state.message,
-                onDismiss = {
+                onConfirm = {
                     onDismissErrorAlertDialog()
                 }
             )

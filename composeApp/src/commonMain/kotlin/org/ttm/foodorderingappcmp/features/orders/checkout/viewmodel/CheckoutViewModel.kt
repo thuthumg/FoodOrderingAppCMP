@@ -70,7 +70,7 @@ class CheckoutViewModel : ViewModel() {
 
         viewModelScope.launch {
 
-            _state.update { it.copy(loading = true, errorDialogShowStatus = false) }
+            _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
 
 
             when (val result = checkoutRepository.addDeliveryAddressAndPayment(
@@ -111,7 +111,7 @@ class CheckoutViewModel : ViewModel() {
 
     fun onDismissErrorAlertDialog() {
         _state.update {
-            it.copy(loading = false, errorDialogShowStatus = false)
+            it.copy(loading = false, errorDialogShowStatus = false, message = "")
         }
     }
 
