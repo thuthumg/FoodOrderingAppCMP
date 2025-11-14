@@ -2,10 +2,10 @@ package org.ttm.foodorderingappcmp.features.orders.checkout.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -20,20 +20,12 @@ class CheckoutViewModel : ViewModel() {
 
     private val _state = MutableStateFlow(CheckoutState())
 
-    val state = _state.onStart {
-        _state.update {
-            it.copy(
-                loading = false,
-                message = "",
-                errorDialogShowStatus = false,
-                checkoutApiStatus = false
-            )
-        }
-    }.stateIn(
-        viewModelScope,
-        SharingStarted.WhileSubscribed(100L),
-        _state.value
-    )
+
+    val state = _state.asStateFlow()
+
+    private val _onNavigateToOrderReview = MutableSharedFlow<Boolean>()
+
+    val onNavigateToOrderReview = _onNavigateToOrderReview.asSharedFlow()
 
     fun addDeliveryAddressAndPayment(
         cardNumber: String,
@@ -103,6 +95,8 @@ class CheckoutViewModel : ViewModel() {
                     checkoutRepository.insertDeliveryAddressAndPayment(
                         result.data
                     )
+
+                    onPlaceOrderHandled()
                 }
 
             }
@@ -131,5 +125,10 @@ class CheckoutViewModel : ViewModel() {
         return cvv.matches(Regex("^[0-9]{3,4}$"))
     }
 
+    fun onPlaceOrderHandled() {
+        viewModelScope.launch {
+            _onNavigateToOrderReview.emit(true)
+        }
 
+    }
 }

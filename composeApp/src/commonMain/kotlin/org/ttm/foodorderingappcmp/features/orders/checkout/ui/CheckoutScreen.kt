@@ -14,6 +14,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,6 +64,14 @@ fun CheckoutRoute(
 
     val checkoutState by checkoutViewModel.state.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit){
+        checkoutViewModel.onNavigateToOrderReview.collect { shouldNavigate ->
+            if(shouldNavigate){
+                onNavigateToOrderReview()
+            }
+        }
+    }
+
     CheckoutScreen(
         state = checkoutState,
         onTapBack = {
@@ -77,9 +86,9 @@ fun CheckoutRoute(
                 deliveryAddress
             )
         },
-        onNavigateToOrderReview = {
-            onNavigateToOrderReview()
-        },
+//        onNavigateToOrderReview = {
+//            onNavigateToOrderReview()
+//        },
         onDismissErrorAlertDialog = {
             checkoutViewModel.onDismissErrorAlertDialog()
         }
@@ -99,7 +108,7 @@ fun CheckoutScreen(
         nameOnCard: String,
         deliveryAddress: String,
     ) -> Unit,
-    onNavigateToOrderReview: () -> Unit,
+   // onNavigateToOrderReview: () -> Unit,
     onDismissErrorAlertDialog: () -> Unit
 
 ) {
@@ -121,11 +130,11 @@ fun CheckoutScreen(
 
 
     /*************API Call Success State*********************/
-    if(state.checkoutApiStatus){
-        state.deliveryAddressAndPaymentVO?.let {
-            onNavigateToOrderReview()
-        }
-    }
+//    if(state.checkoutApiStatus){
+//        state.deliveryAddressAndPaymentVO?.let {
+//            onNavigateToOrderReview()
+//        }
+//    }
 
 
         /*************API Call Error State*********************/

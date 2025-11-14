@@ -2,8 +2,10 @@ package org.ttm.foodorderingappcmp.features.orders.order_review.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
@@ -21,6 +23,10 @@ class OrderReviewViewModel: ViewModel() {
     val orderReviewRepository = OrderReviewRepository
 
     private val _state = MutableStateFlow(OrderReviewState())
+
+    private val _onNavigateToConfirmOrder = MutableSharedFlow<Boolean>()
+
+    val onNavigateToConfirmOrder = _onNavigateToConfirmOrder.asSharedFlow()
 
     val orderReviewState = _state.onStart {
         _state.update {
@@ -86,6 +92,7 @@ class OrderReviewViewModel: ViewModel() {
                         errorDialogShowStatus = false,
                         deliveryAddressAndPaymentVO = result.data
                     )
+
                 }
             }
         }
@@ -121,8 +128,15 @@ class OrderReviewViewModel: ViewModel() {
                             errorDialogShowStatus = false
                         )
                     }
+                    onOrderSubmitHandled()
                 }
             }
         }
+    }
+    fun onOrderSubmitHandled() {
+        viewModelScope.launch {
+            _onNavigateToConfirmOrder.emit(true)
+        }
+
     }
 }

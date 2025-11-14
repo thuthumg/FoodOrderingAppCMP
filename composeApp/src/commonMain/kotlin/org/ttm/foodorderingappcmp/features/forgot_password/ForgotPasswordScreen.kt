@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,6 +51,15 @@ fun ForgotPasswordRoute(forgotPasswordViewModel: ForgotPasswordViewModel,
 
     val forgotPasswordState by forgotPasswordViewModel.forgotPasswordState.collectAsStateWithLifecycle()
 
+
+    LaunchedEffect(Unit){
+        forgotPasswordViewModel.onNavigateToResetPassword.collect { checkEmailResponse ->
+            apiToken = checkEmailResponse.resetPasswordToken
+            onNavigateToResetPassword(checkEmailResponse.user.email)
+        }
+    }
+
+
     ForgotPasswordScreen(
         forgotPasswordState = forgotPasswordState,
         onTapBack = {
@@ -61,10 +71,11 @@ fun ForgotPasswordRoute(forgotPasswordViewModel: ForgotPasswordViewModel,
         onDismissErrorAlertDialog = {
             forgotPasswordViewModel.onDismissErrorAlertDialog()
         },
-        onNavigateToResetPassword = { email->
-            onNavigateToResetPassword(email)
-            
-        }
+//        onNavigateToResetPassword = { email->
+//            onNavigateToResetPassword(email)
+//            forgotPasswordViewModel.onTapContinueHandled()
+//
+//        }
     )
 }
 @Composable
@@ -72,7 +83,8 @@ fun ForgotPasswordScreen(forgotPasswordState: ForgotPasswordState,
                          onTapBack: () -> Unit,
                          onTapContinue: (String)-> Unit,
                          onDismissErrorAlertDialog: () -> Unit,
-                         onNavigateToResetPassword: (String) -> Unit) {
+                       //  onNavigateToResetPassword: (String) -> Unit
+) {
     var email by remember{ mutableStateOf("") }
 
     /************* Loading State *********************/
@@ -95,10 +107,14 @@ fun ForgotPasswordScreen(forgotPasswordState: ForgotPasswordState,
         )
     }
     /************* API Call Success State *********************/
-    forgotPasswordState.checkEmailResponse?.let {
-        apiToken = it.resetPasswordToken
-        onNavigateToResetPassword(it.user.email)
-    }
+
+//    LaunchedEffect(forgotPasswordState.checkEmailResponse){
+//        forgotPasswordState.checkEmailResponse?.let {
+//            apiToken = it.resetPasswordToken
+//            onNavigateToResetPassword(it.user.email)
+//        }
+//    }
+
 
     /************* Forgot Password Screen *********************/
     Scaffold(

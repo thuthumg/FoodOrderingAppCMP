@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,6 +62,15 @@ fun OrderReviewRoute(viewModel: OrderReviewViewModel,
 
     val orderReviewState by viewModel.orderReviewState.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit) {
+        viewModel.onNavigateToConfirmOrder.collect { shouldNavigate ->
+            if (shouldNavigate) {
+                onNavigateToOrderConfirmation()
+            }
+        }
+    }
+
+
     OrderReviewScreen(
         orderReviewState = orderReviewState,
         onTapBack = onTapBack,
@@ -70,7 +80,10 @@ fun OrderReviewRoute(viewModel: OrderReviewViewModel,
         onDismissErrorAlertDialog = {
             viewModel.onDismissErrorAlertDialog()
         },
-        onNavigateToOrderConfirmation = onNavigateToOrderConfirmation
+       // onNavigateToOrderConfirmation = onNavigateToOrderConfirmation,
+//       onNavigateToOrderConfirmation onOrderSubmitHandled = {
+//            viewModel.onOrderSubmitHandled()
+//        }
     )
 
 }
@@ -80,7 +93,8 @@ fun OrderReviewScreen(
     onTapBack: () -> Unit,
     onTapConfirmOrder: (Long, Long,  List<FoodItemVO>) -> Unit,
     onDismissErrorAlertDialog: () -> Unit,
-    onNavigateToOrderConfirmation: () -> Unit) {
+   // onOrderSubmitHandled: () -> Unit
+) {
 
 
     /************* Loading State *********************/
@@ -103,9 +117,13 @@ fun OrderReviewScreen(
         )
     }
     /************* API Call Success State *********************/
-    if(orderReviewState.orderSubmitStatus){
-        onNavigateToOrderConfirmation()
-    }
+
+//    LaunchedEffect(orderReviewState.orderSubmitStatus) {
+//        if (orderReviewState.orderSubmitStatus) {
+//            onNavigateToOrderConfirmation()
+//            onOrderSubmitHandled()
+//        }
+//    }
 
     /********************** Order Review Screen *******************************/
     Scaffold(

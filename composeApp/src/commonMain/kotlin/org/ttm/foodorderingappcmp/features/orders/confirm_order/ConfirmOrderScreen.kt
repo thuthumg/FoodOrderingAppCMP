@@ -11,7 +11,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.backhandler.BackHandler
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -36,16 +38,20 @@ import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_2X
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_3X
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun ConfirmOrderScreen(onTapBack: () -> Unit, onTapConfirmOrder: () -> Unit) {
+    BackHandler(enabled = true) {}
     Scaffold(
         containerColor = SCREEN_BG_COLOR,
         topBar = {
             FoodOrderingAppTopAppBar(
                 stringResource(Res.string.order_confirmed),
+                showBack = false,
                 onTapBack = {
-                    onTapBack()
-                })
+                  //  onTapBack()
+                }
+            )
         }
     ) { innerPadding ->
 
