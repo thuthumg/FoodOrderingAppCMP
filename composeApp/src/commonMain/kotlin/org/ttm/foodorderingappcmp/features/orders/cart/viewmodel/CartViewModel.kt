@@ -35,7 +35,7 @@ class CartViewModel: ViewModel() {
 
             _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
 
-            when(val result = cartRepository.getAllCartFromDb()){
+            when(val result = cartRepository.getAllCartFromDbFlow()){
                 is Resource.Error -> _state.update {
                     it.copy(
                         loading = false,
@@ -44,14 +44,19 @@ class CartViewModel: ViewModel() {
                         errorDialogShowStatus = true
                     )
                 }
-                is Resource.Success -> _state.update {
-                    it.copy(
-                        foodItemList =  result.data,
-                        loading = false,
-                        message = "",
-                        successStatus = true,
-                        errorDialogShowStatus = false
-                    )
+                is Resource.Success ->{
+                    result.data.collect { cardList ->
+                        _state.update {
+                            it.copy(
+                                foodItemList =  cardList ?: listOf(),
+                                loading = false,
+                                message = "",
+                                successStatus = true,
+                                errorDialogShowStatus = false
+                            )
+                        }
+                    }
+
                 }
             }
         }
@@ -69,7 +74,7 @@ class CartViewModel: ViewModel() {
 
             if ((foodItemVO.quantity ?: 0)>= 1) {
                 cartRepository.insertCart(foodItemVO)
-                getAllCartList()
+               // getAllCartList()
             } else {
                 _state.update {
                     it.copy(
@@ -97,7 +102,7 @@ class CartViewModel: ViewModel() {
                     message = "")
             }
             cartRepository.deleteCart(foodItemVO)
-            getAllCartList()
+          //  getAllCartList()
 
         }
     }
@@ -109,7 +114,7 @@ class CartViewModel: ViewModel() {
                 message = "") }
 
             cartRepository.insertCart(foodItemVO)
-            getAllCartList()
+           // getAllCartList()
         }
     }
 
