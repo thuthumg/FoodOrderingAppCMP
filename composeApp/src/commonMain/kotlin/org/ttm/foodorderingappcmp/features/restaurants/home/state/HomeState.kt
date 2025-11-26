@@ -6,6 +6,5 @@ data class HomeState (
     val restaurantList: List<RestaurantVO> = listOf(),
     val loading: Boolean = false,
     val message: String = "",
-    val errorDialogShowStatus: Boolean = false,
-    val loginStatus: Boolean = true
+    val loginStatus: Boolean = false
 )

@@ -1,10 +1,13 @@
 package org.ttm.foodorderingappcmp.features.restaurants.data.repository
 
+import coil3.network.HttpException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.io.IOException
 import org.ttm.foodorderingappcmp.core.network.Resource
+import org.ttm.foodorderingappcmp.core.network.UnauthorizedException
 import org.ttm.foodorderingappcmp.core.persistence.AppDatabaseProvider
 import org.ttm.foodorderingappcmp.features.restaurants.data.vos.FoodItemVO
 import org.ttm.foodorderingappcmp.features.restaurants.data.vos.RestaurantVO
@@ -26,8 +29,12 @@ object RestaurantRepository {
 
                  Resource.Success(restaurantVOList)
 
+             } catch (e: UnauthorizedException) {
+                 Resource.Error(message = e.message)
+             } catch (e: IOException) {
+                 Resource.Error("Network error! Check your internet connection.")
              } catch (e: Exception) {
-                 Resource.Error(e.message  ?: "Something went wrong!")
+                 Resource.Error(e.message ?: "Something went wrong!")
              }
 
         }

@@ -2,12 +2,17 @@ package org.ttm.foodorderingappcmp.features.restaurants.home.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.ttm.foodorderingappcmp.core.network.Resource
 import org.ttm.foodorderingappcmp.features.restaurants.data.repository.RestaurantRepository
+import org.ttm.foodorderingappcmp.features.restaurants.home.actions.HomeActions
+import org.ttm.foodorderingappcmp.features.restaurants.home.events.HomeEvents
+import org.ttm.foodorderingappcmp.features.restaurants.home.events.HomeEvents.*
 import org.ttm.foodorderingappcmp.features.restaurants.home.state.HomeState
 
 class HomeViewModel: ViewModel() {
@@ -18,6 +23,11 @@ class HomeViewModel: ViewModel() {
 
     val homeState = _state.asStateFlow()
 
+    private val _navigationSharedFlow : MutableSharedFlow<HomeEvents> = MutableSharedFlow()
+
+    val navigationSharedFlow = _navigationSharedFlow.asSharedFlow()
+
+
     init {
         getAllRestaurants()
     }
@@ -25,15 +35,36 @@ class HomeViewModel: ViewModel() {
     fun getAllRestaurants(){
         viewModelScope.launch {
 
-            _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
+            _state.update { it.copy(loading = true,
+                message = "") }
 
             when(val result = restaurantRepository.getAllRestaurants()){
-                is Resource.Error -> _state.update {
-                    it.copy(
-                        loading = false,
-                        message = result.message,
-                        errorDialogShowStatus = true
-                    )
+                is Resource.Error -> {
+                    if (result.message == "Unauthorized (401)"){
+                        _state.update {
+                            it.copy(
+                                loading = false,
+                                message = result.message,
+                                //errorDialogShowStatus = true
+                            )
+                        }
+                    }else{
+                        _state.update {
+                            it.copy(
+                                loading = false,
+                                message = result.message,
+                                // errorDialogShowStatus = true
+                            )
+                        }
+                    }
+
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            message = result.message,
+                            // errorDialogShowStatus = true
+                        )
+                    }
                 }
 
                 is Resource.Success -> _state.update {
@@ -41,7 +72,7 @@ class HomeViewModel: ViewModel() {
                         restaurantList =  result.data,
                         loading = false,
                         message = "",
-                        errorDialogShowStatus = false
+                       // errorDialogShowStatus = false
                     )
                 }
             }
@@ -51,9 +82,41 @@ class HomeViewModel: ViewModel() {
 
         }
     }
-    fun onDismissErrorAlertDialog() {
-        _state.update {
-            it.copy(errorDialogShowStatus = false, loginStatus = false, message = "")
+    fun onAction(action: HomeActions){
+        when(action){
+            is HomeActions.OnTapOrder -> {
+                viewModelScope.launch {
+                    _navigationSharedFlow.emit(NavigateToRestaurantDetail(action.restaurantDetailId))
+                }
+
+            }
+            is HomeActions.OnTapShoppingCart -> {
+                viewModelScope.launch {
+                    _navigationSharedFlow.emit(NavigateToCart())
+                }
+
+            }
+
+            is HomeActions.OnErrorDialogDismissed -> {
+                _state.update {
+                    it.copy(
+                        loading = false,
+                        message = "",
+                        loginStatus = false
+                    )
+                }
+            }
+
+            is HomeActions.OnUnauthorized -> {
+                _state.update {
+                    it.copy(
+                        loading = false,
+                        message = "",
+                        loginStatus = true
+                    )
+                }
+            }
         }
+
     }
 }

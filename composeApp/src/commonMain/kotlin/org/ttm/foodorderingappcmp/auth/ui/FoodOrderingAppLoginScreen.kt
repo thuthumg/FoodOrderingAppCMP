@@ -15,10 +15,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -38,10 +37,13 @@ import foodorderingappcmp.composeapp.generated.resources.log_in
 import foodorderingappcmp.composeapp.generated.resources.password
 import foodorderingappcmp.composeapp.generated.resources.sign_up
 import foodorderingappcmp.composeapp.generated.resources.welcome_back
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.ttm.foodorderingappcmp.auth.ui.state.LoginRegisterState
-import org.ttm.foodorderingappcmp.auth.ui.viewmodel.LoginRegisterViewModel
+import org.ttm.foodorderingappcmp.auth.actions.LoginActions
+import org.ttm.foodorderingappcmp.auth.events.LoginEvents
+import org.ttm.foodorderingappcmp.auth.ui.state.LoginState
+import org.ttm.foodorderingappcmp.auth.ui.viewmodel.LoginViewModel
 import org.ttm.foodorderingappcmp.common.ui.CommonAlertDialog
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppButton
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppOutlineTxtField
@@ -59,25 +61,37 @@ import org.ttm.foodorderingappcmp.core.utils.apiToken
 
 
 @Composable
-fun FoodOrderingAppLoginScreenRoute(loginRegisterViewModel: LoginRegisterViewModel,
+fun FoodOrderingAppLoginScreenRoute(loginViewModel: LoginViewModel,
                                     onNavigateToHome: () -> Unit,
                                     onTapSignUp: ()-> Unit,
                                     onTapForgotPassword: () -> Unit) {
 
 
-    val state by loginRegisterViewModel.state.collectAsStateWithLifecycle()
+    val state by loginViewModel.state.collectAsStateWithLifecycle()
 
+
+    LaunchedEffect(Unit){
+        loginViewModel.navigationSharedFlow.collectLatest { event ->
+            when(event){
+                is LoginEvents.NavigateToHome ->{
+                    onNavigateToHome()
+                }
+                is LoginEvents.NavigateToSignUp -> {
+                    onTapSignUp()
+                }
+                is LoginEvents.NavigateToForgotPassword -> {
+                    onTapForgotPassword()
+                }
+            }
+
+        }
+
+    }
 
     FoodOrderingAppLoginScreen(
         state = state,
-        onTapLogin = { email, password ->
-            loginRegisterViewModel.onClickLogin(email, password)
-        },
-        onTapSignUp = onTapSignUp,
-        onTapForgotPassword = onTapForgotPassword,
-        onNavigateToHome = onNavigateToHome,
-        onDismissErrorAlertDialog = {
-            loginRegisterViewModel.onDismissErrorAlertDialog()
+        onAction = {
+            loginViewModel.onAction(it)
         }
     )
 
@@ -89,15 +103,8 @@ fun FoodOrderingAppLoginScreenRoute(loginRegisterViewModel: LoginRegisterViewMod
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FoodOrderingAppLoginScreen(
-    state : LoginRegisterState,
-    onTapLogin: (email: String,password: String) -> Unit,
-    onTapSignUp: ()-> Unit,
-    onTapForgotPassword: () -> Unit,
-    onNavigateToHome: () -> Unit,
-    onDismissErrorAlertDialog:() -> Unit) {
-
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    state : LoginState,
+    onAction: (LoginActions) -> Unit) {
 
     val focusManager = LocalFocusManager.current
     val passwordFocusRequester = remember { FocusRequester() }
@@ -110,29 +117,18 @@ fun FoodOrderingAppLoginScreen(
         )
     }
 
-    /************ Login Success and Fail *****************/
-    if (state.loginStatus){
+    /************ Login Fail *****************/
 
-        //success
-        state.loginRegisterVO?.let {
-            apiToken = it.accessToken ?: ""
-            onNavigateToHome()
-        }
-    }else{
-
-        //fail
-        if (state.message.isNotBlank() && (state.errorDialogShowStatus)) {
-            apiToken = ""
-            CommonAlertDialog(
-                title = "Error",
-                message = state.message,
-                onConfirm = {
-                    onDismissErrorAlertDialog()
-                }
-            )
-        }
+    if(state.message.isNotBlank()){
+        apiToken = ""
+        CommonAlertDialog(
+            title = "Error",
+            message = state.message,
+            onConfirm = {
+                onAction(LoginActions.OnErrorDialogDismissed())
+            }
+        )
     }
-
     /******************** Login Screen *********************************/
     Scaffold(
         containerColor = SCREEN_BG_COLOR,
@@ -179,9 +175,9 @@ fun FoodOrderingAppLoginScreen(
 
             //Email input section
             FoodOrderingAppOutlineTxtField(
-                value = email,
+                value = state.email,
                 onValueChange = { text ->
-                    email = text
+                    onAction(LoginActions.OnEmailChanged(text))
                 },
                 txt = stringResource(Res.string.email),
                 isPasswordField = false,
@@ -197,9 +193,9 @@ fun FoodOrderingAppLoginScreen(
             //Password input section
             FoodOrderingAppOutlineTxtField(
 
-                value = password,
+                value = state.password,
                 onValueChange = { text ->
-                    password = text
+                    onAction(LoginActions.OnPasswordChanged(text))
 
                 },
                 txt = stringResource(Res.string.password),
@@ -208,7 +204,8 @@ fun FoodOrderingAppLoginScreen(
                 imeAction = ImeAction.Done,
                 onImeAction = {
                     focusManager.clearFocus()
-                    onTapLogin(email,password)
+                    onAction(LoginActions.OnTapLoginAction())
+
                 },
                 modifier = Modifier
                     .padding(horizontal = MARGIN_MEDIUM_2, vertical = MARGIN_MEDIUM)
@@ -222,7 +219,7 @@ fun FoodOrderingAppLoginScreen(
                 color = OUTLINE_TXT_FIELD_TXT_COLOR,
                 modifier = Modifier.padding(horizontal = MARGIN_MEDIUM_2, vertical = MARGIN_MEDIUM)
                     .align(Alignment.End).clickable{
-                        onTapForgotPassword()
+                        onAction(LoginActions.OnTapForgotPasswordAction())
                     }
             )
 
@@ -230,7 +227,7 @@ fun FoodOrderingAppLoginScreen(
             //Log in Button Section
             FoodOrderingAppButton(
                 onTapButton = {
-                    onTapLogin(email,password)
+                    onAction(LoginActions.OnTapLoginAction())
                 },
                 modifier =
                     Modifier.padding(horizontal = MARGIN_MEDIUM_2, vertical = MARGIN_CARD_MEDIUM_2)
@@ -258,7 +255,7 @@ fun FoodOrderingAppLoginScreen(
                 modifier = Modifier.padding(top = MARGIN_MEDIUM)
                     .align(Alignment.CenterHorizontally)
                     .clickable{
-                        onTapSignUp()
+                        onAction(LoginActions.OnTapSignUpAction())
                     }
             )
 

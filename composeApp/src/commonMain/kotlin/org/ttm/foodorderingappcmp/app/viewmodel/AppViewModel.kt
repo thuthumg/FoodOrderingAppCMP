@@ -8,8 +8,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.ttm.foodorderingappcmp.app.data.AppRepository
 import org.ttm.foodorderingappcmp.app.state.AppState
-import org.ttm.foodorderingappcmp.auth.data.repository.LoginRegisterRepository
-import org.ttm.foodorderingappcmp.auth.ui.state.LoginRegisterState
 import org.ttm.foodorderingappcmp.core.utils.apiToken
 
 class AppViewModel: ViewModel() {

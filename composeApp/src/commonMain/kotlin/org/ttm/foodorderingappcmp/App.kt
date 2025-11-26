@@ -20,15 +20,14 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.ttm.foodorderingappcmp.app.viewmodel.AppViewModel
 import org.ttm.foodorderingappcmp.auth.ui.FoodOrderingAppLoginScreenRoute
 import org.ttm.foodorderingappcmp.auth.ui.FoodOrderingAppRegisterRoute
-import org.ttm.foodorderingappcmp.auth.ui.viewmodel.LoginRegisterViewModel
+import org.ttm.foodorderingappcmp.auth.ui.viewmodel.LoginViewModel
+import org.ttm.foodorderingappcmp.auth.ui.viewmodel.RegisterViewModel
 import org.ttm.foodorderingappcmp.core.FoodOrderingAppTypography
 import org.ttm.foodorderingappcmp.core.persistence.AppDatabase
 import org.ttm.foodorderingappcmp.core.persistence.AppDatabaseProvider
 import org.ttm.foodorderingappcmp.core.utils.apiToken
 import org.ttm.foodorderingappcmp.features.forgot_password.ForgotPasswordRoute
-import org.ttm.foodorderingappcmp.features.forgot_password.ForgotPasswordScreen
 import org.ttm.foodorderingappcmp.features.forgot_password.ResetPasswordRoute
-import org.ttm.foodorderingappcmp.features.forgot_password.ResetPasswordScreen
 import org.ttm.foodorderingappcmp.features.forgot_password.ui.viewmodel.ForgotPasswordViewModel
 import org.ttm.foodorderingappcmp.features.forgot_password.ui.viewmodel.ResetPasswordViewModel
 import org.ttm.foodorderingappcmp.features.orders.cart.ui.CartRoute
@@ -53,7 +52,6 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
     val navController = rememberNavController()
 
 
-
     /******************Auto Login Section**********************/
     // ViewModel
     val appViewModel: AppViewModel = viewModel()
@@ -62,9 +60,11 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
     val state by appViewModel.state.collectAsStateWithLifecycle()
     var startDestinationPoint: Any by remember { mutableStateOf(NavRoutes.Splash) }
 
-    LaunchedEffect(Unit){
+    LaunchedEffect(Unit) {
         delay(3000)
-        startDestinationPoint = if(state.loginStatus) NavRoutes.Home("Home") else NavRoutes.Login
+        startDestinationPoint = if (state.loginStatus) NavRoutes.Home("Home")
+        else
+            NavRoutes.Login
     }
 
 //    val startDestinationState = remember {
@@ -90,33 +90,30 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
 
         NavHost(
             navController = navController,
-            startDestination =  startDestinationPoint
+            startDestination = startDestinationPoint
         ) {
             /******** Splash *************/
 
-            composable<NavRoutes.Splash>{
+            composable<NavRoutes.Splash> {
                 SplashScreen()
             }
 
             /******** Login *************/
             composable<NavRoutes.Login> {
-                val loginRegisterViewModel = viewModel { LoginRegisterViewModel() }
+                val loginViewModel = viewModel { LoginViewModel() }
 
                 FoodOrderingAppLoginScreenRoute(
-                    loginRegisterViewModel,
+                    loginViewModel,
                     onNavigateToHome = {
                         navController.navigate(NavRoutes.Home("Home")) {
-                            popUpTo(navController.graph.startDestinationId) {
+                            popUpTo(NavRoutes.Login::class) {
                                 inclusive = true
                             }
                         }
                     },
                     onTapSignUp = {
-                        navController.navigate(NavRoutes.Register) {
-                            popUpTo(navController.graph.startDestinationId) {
-                                inclusive = true
-                            }
-                        }
+                        navController.navigate(NavRoutes.Register)
+
                     },
                     onTapForgotPassword = {
                         navController.navigate(NavRoutes.ForgotPassword)
@@ -129,9 +126,9 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
 
             /******** Register *************/
             composable<NavRoutes.Register> {
-                val loginRegisterViewModel = viewModel { LoginRegisterViewModel() }
+                val registerViewModel = viewModel { RegisterViewModel() }
                 FoodOrderingAppRegisterRoute(
-                    loginRegisterViewModel = loginRegisterViewModel,
+                    registerViewModel = registerViewModel,
                     onNavigateToHome = {
                         navController.navigate(NavRoutes.Home("Home")) {
                             popUpTo(navController.graph.startDestinationId) {
@@ -149,7 +146,7 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
                 val args = backStackEntry.toRoute<NavRoutes.Home>()
                 var selectedNavItem by remember { mutableStateOf(args.selectedPage) }
 
-                val loginRegisterViewModel = viewModel { LoginRegisterViewModel() }
+                val loginViewModel = viewModel { LoginViewModel() }
 
                 HomeBottomNavigationScreen(
                     selectedNavItem = selectedNavItem,
@@ -164,7 +161,7 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
                     },
                     onNavigateToLogin = {
                         apiToken = ""
-                        loginRegisterViewModel.clearUserData()
+                        loginViewModel.clearUserData()
 
                         navController.navigate(NavRoutes.Login) {
                             popUpTo(NavRoutes.Home::class) {
@@ -177,7 +174,7 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
                     },
                     onNavigateToLogout = {
                         apiToken = ""
-                        loginRegisterViewModel.clearUserData()
+                        loginViewModel.clearUserData()
 
                         navController.navigate(NavRoutes.Login) {
                             popUpTo(NavRoutes.Home::class) {
@@ -192,7 +189,7 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
             composable<NavRoutes.RestaurantDetail> { backStackEntry ->
                 val args = backStackEntry.toRoute<NavRoutes.RestaurantDetail>()
 
-                val viewModel = viewModel {RestaurantDetailViewModel(args.restaurantId)}
+                val viewModel = viewModel { RestaurantDetailViewModel(args.restaurantId) }
 
                 RestaurantDetailRoute(
                     restaurantViewModel = viewModel,
@@ -208,7 +205,7 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
 
             /******** Add to Cart *************/
             composable<NavRoutes.Cart> {
-                val cartViewModel =  viewModel { CartViewModel() }
+                val cartViewModel = viewModel { CartViewModel() }
                 CartRoute(
                     cartViewModel = cartViewModel,
                     onTapBack = {
@@ -232,7 +229,7 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
 
             /******** Checkout *************/
             composable<NavRoutes.Checkout> {
-                val checkoutViewModel =  viewModel { CheckoutViewModel() }
+                val checkoutViewModel = viewModel { CheckoutViewModel() }
                 CheckoutRoute(
                     checkoutViewModel = checkoutViewModel,
                     onTapBack = {
@@ -252,7 +249,7 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
                     viewModel = orderReviewViewModel,
                     onTapBack = {
                         navController.navigateUp()
-                },
+                    },
                     onNavigateToOrderConfirmation = {
                         navController.navigate(NavRoutes.OrderConfirm)
                     })
@@ -277,7 +274,7 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
             /******** Forgot Password *************/
             composable<NavRoutes.ForgotPassword> {
 
-                val viewModel = viewModel{ ForgotPasswordViewModel() }
+                val viewModel = viewModel { ForgotPasswordViewModel() }
 
                 ForgotPasswordRoute(
                     forgotPasswordViewModel = viewModel,
@@ -296,7 +293,7 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
             composable<NavRoutes.ResetPassword> { backStackEntry ->
                 val args = backStackEntry.toRoute<NavRoutes.ResetPassword>()
 
-                val viewModel = viewModel { ResetPasswordViewModel(args.email)}
+                val viewModel = viewModel { ResetPasswordViewModel(args.email) }
 
 
                 ResetPasswordRoute(

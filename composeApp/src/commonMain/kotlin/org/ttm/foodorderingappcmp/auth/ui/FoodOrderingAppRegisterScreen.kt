@@ -16,10 +16,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -38,10 +37,13 @@ import foodorderingappcmp.composeapp.generated.resources.ic_info
 import foodorderingappcmp.composeapp.generated.resources.name
 import foodorderingappcmp.composeapp.generated.resources.password
 import foodorderingappcmp.composeapp.generated.resources.terms_of_service
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
-import org.ttm.foodorderingappcmp.auth.ui.state.LoginRegisterState
-import org.ttm.foodorderingappcmp.auth.ui.viewmodel.LoginRegisterViewModel
+import org.ttm.foodorderingappcmp.auth.actions.RegisterActions
+import org.ttm.foodorderingappcmp.auth.events.RegisterEvents
+import org.ttm.foodorderingappcmp.auth.ui.state.RegisterState
+import org.ttm.foodorderingappcmp.auth.ui.viewmodel.RegisterViewModel
 import org.ttm.foodorderingappcmp.common.ui.CommonAlertDialog
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppButton
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppOutlineTxtField
@@ -54,29 +56,32 @@ import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_2X
 import org.ttm.foodorderingappcmp.core.TEXT_XXLARGE
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
-import org.ttm.foodorderingappcmp.core.utils.apiToken
 
 
 @Composable
 fun FoodOrderingAppRegisterRoute(
-    loginRegisterViewModel: LoginRegisterViewModel,
+    registerViewModel: RegisterViewModel,
     onNavigateToHome: () -> Unit,
 ) {
 
-    val state by loginRegisterViewModel.state.collectAsStateWithLifecycle()
+    val state by registerViewModel.registerState.collectAsStateWithLifecycle()
+
+
+
+    LaunchedEffect(Unit){
+        registerViewModel.navigationSharedFlow.collectLatest {
+            when(it){
+                is RegisterEvents.NavigateToHome -> {onNavigateToHome()}
+            }
+        }
+    }
+
+
 
     FoodOrderingAppRegisterScreen(
         state = state,
-        onTapCreateAcc = { fullName, email, password ->
-            loginRegisterViewModel.onClickRegister(
-                fullName = fullName,
-                email = email,
-                password = password
-            )
-        },
-        onNavigateToHome = onNavigateToHome,
-        onDismissErrorAlertDialog = {
-            loginRegisterViewModel.onDismissErrorAlertDialog()
+        onAction = {
+            registerViewModel.onAction(it)
         })
 }
 
@@ -84,15 +89,10 @@ fun FoodOrderingAppRegisterRoute(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FoodOrderingAppRegisterScreen(
-    state: LoginRegisterState,
-    onTapCreateAcc: (String, String, String) -> Unit,
-    onNavigateToHome: () -> Unit,
-    onDismissErrorAlertDialog: () -> Unit,
-) {
-    var name by remember { mutableStateOf("") }
+    state: RegisterState,
+    onAction: (RegisterActions) -> Unit)
 
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+{
 
     val focusManager = LocalFocusManager.current
     val emailFocusRequester = remember { FocusRequester() }
@@ -106,25 +106,17 @@ fun FoodOrderingAppRegisterScreen(
         )
     }
 
-    /************ Login Success and Fail *****************/
-    if (state.loginStatus) {
-        state.loginRegisterVO?.let {
-            apiToken = it.accessToken ?: ""
-            onNavigateToHome()
-        }
-    } else {
-        if (state.message.isNotBlank() && (state.errorDialogShowStatus)) {
-            CommonAlertDialog(
+    /************ Login Fail *****************/
+
+    if(state.message.isNotEmpty()){
+        CommonAlertDialog(
                 title = "Error",
                 message = state.message,
                 onConfirm = {
-                    onDismissErrorAlertDialog()
+                    onAction(RegisterActions.OnErrorDialogDismissed())
                 }
             )
-        }
     }
-
-
     /******************** Register Screen *********************************/
     Scaffold(
         containerColor = SCREEN_BG_COLOR,
@@ -175,9 +167,9 @@ fun FoodOrderingAppRegisterScreen(
 
                 //Name input section
                 FoodOrderingAppOutlineTxtField(
-                    value = name,
+                    value = state.fullName,
                     onValueChange = { text ->
-                        name = text
+                        onAction(RegisterActions.OnFullNameChanged(text))
                     },
                     txt = stringResource(Res.string.name),
                     isPasswordField = false,
@@ -193,9 +185,9 @@ fun FoodOrderingAppRegisterScreen(
 
                 //Email input section
                 FoodOrderingAppOutlineTxtField(
-                    value = email,
+                    value = state.email,
                     onValueChange = { text ->
-                        email = text
+                        onAction(RegisterActions.OnEmailChanged(text))
                     },
                     txt = stringResource(Res.string.email),
                     isPasswordField = false,
@@ -211,19 +203,17 @@ fun FoodOrderingAppRegisterScreen(
 
                 //Password input section
                 FoodOrderingAppOutlineTxtField(
-
-                    value = password,
+                    value = state.password,
                     onValueChange = { text ->
-                        password = text
-
-                    },
+                        onAction(RegisterActions.OnPasswordChanged(text))
+                                    },
                     txt = stringResource(Res.string.password),
                     isPasswordField = true,
                     keyboardType = KeyboardType.Email,
                     imeAction = ImeAction.Done,
                     onImeAction = {
                         focusManager.clearFocus()
-                        onTapCreateAcc(name, email, password)
+                        onAction(RegisterActions.OnTapCreateAccountAction())
                     },
                     modifier = Modifier
                         .padding(horizontal = MARGIN_MEDIUM_2)
@@ -233,7 +223,7 @@ fun FoodOrderingAppRegisterScreen(
                 //Create Account Button Section
                 FoodOrderingAppButton(
                     onTapButton = {
-                        onTapCreateAcc(name, email, password)
+                        onAction(RegisterActions.OnTapCreateAccountAction())
                     },
                     modifier =
                         Modifier.padding(
