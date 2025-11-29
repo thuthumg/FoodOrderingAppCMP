@@ -5,8 +5,10 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -16,6 +18,8 @@ import org.ttm.foodorderingappcmp.core.network.Resource
 import org.ttm.foodorderingappcmp.features.restaurants.data.repository.RestaurantRepository
 import org.ttm.foodorderingappcmp.features.restaurants.data.vos.FoodItemVO
 import org.ttm.foodorderingappcmp.features.restaurants.data.vos.RestaurantVO
+import org.ttm.foodorderingappcmp.features.restaurants.detail.actions.DetailActions
+import org.ttm.foodorderingappcmp.features.restaurants.detail.events.DetailEvents
 import org.ttm.foodorderingappcmp.features.restaurants.detail.state.RestaurantDetailState
 
 class RestaurantDetailViewModel(val restaurantId: Long) : ViewModel(){
@@ -51,8 +55,7 @@ class RestaurantDetailViewModel(val restaurantId: Long) : ViewModel(){
                     restaurantVO = updatedRestaurant,
                     loading = false,
                     message = "",
-                    showViewMyCart = cartItems.isNotEmpty(),
-                    errorDialogShowStatus = false
+                    showViewMyCart = cartItems.isNotEmpty()
                 )
             }
         }
@@ -64,6 +67,11 @@ class RestaurantDetailViewModel(val restaurantId: Long) : ViewModel(){
             _state.value
         )
 
+    private val _navigationSharedFlow : MutableSharedFlow<DetailEvents> = MutableSharedFlow()
+
+    val navigationSharedFlow = _navigationSharedFlow.asSharedFlow()
+
+
     init {
 
         viewModelScope.launch {
@@ -74,7 +82,9 @@ class RestaurantDetailViewModel(val restaurantId: Long) : ViewModel(){
 
     fun getRestaurantDetails() = viewModelScope.launch {
 
-        _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
+        _state.update { it.copy(
+            loading = true,
+            message = "") }
 
         try {
             supervisorScope {
@@ -100,23 +110,31 @@ class RestaurantDetailViewModel(val restaurantId: Long) : ViewModel(){
                                 restaurantVO = updatedRestaurant,
                                 loading = false,
                                 message = "",
-                                showViewMyCart = cartItems.isNotEmpty(),
-                                errorDialogShowStatus = false
+                                showViewMyCart = cartItems.isNotEmpty()
                             )
+                        }
+                    }
+                    is Resource.Error -> {
+                        cartDeferred.cancel()
+                        if (result.message == "Unauthorized (401)"){
+                            _state.update {
+                                it.copy(
+                                    loading = false,
+                                    message = result.message,
+                                    loginStatus = true
+                                )
+                            }
+                        }else{
+                            _state.update {
+                                it.copy(
+                                    loading = false,
+                                    message = result.message,
+                                    loginStatus = false
+                                )
+                            }
                         }
                     }
 
-                    is Resource.Error -> {
-                        cartDeferred.cancel()
-                        _state.update {
-                            it.copy(
-                                loading = false,
-                                message = result.message,
-                                showViewMyCart = false,
-                                errorDialogShowStatus = true
-                            )
-                        }
-                    }
                 }
             }
         } catch (e: Exception) {
@@ -124,8 +142,7 @@ class RestaurantDetailViewModel(val restaurantId: Long) : ViewModel(){
                 it.copy(
                     loading = false,
                     message = e.message ?: "Something went wrong!",
-                    showViewMyCart = false,
-                    errorDialogShowStatus = true
+                    showViewMyCart = false
 
                 )
             }
@@ -164,10 +181,44 @@ class RestaurantDetailViewModel(val restaurantId: Long) : ViewModel(){
 
     }
 
-    fun onDismissErrorAlertDialog() {
-        _state.update {
-            it.copy(errorDialogShowStatus = false, message = "")
+
+    fun onAction(action: DetailActions){
+        when(action){
+
+            is DetailActions.OnTapAdd -> {
+                addToCart(foodItemVO = action.foodItem)
+            }
+            is DetailActions.OnTapBack -> {
+                viewModelScope.launch {
+                    _navigationSharedFlow.emit(DetailEvents.NavigateToHome())
+                }
+            }
+            is DetailActions.OnTapCategoryTab -> {
+                _state.update {
+                    it.copy(
+                        selectedTab = action.selectedTab
+                    )
+                }
+            }
+            is DetailActions.OnTapViewMyCart -> {
+                viewModelScope.launch {
+                    _navigationSharedFlow.emit(DetailEvents.NavigateToCart())
+                }
+            }
+
+            is DetailActions.OnErrorDialogDismissed -> {
+                _state.update {
+                    it.copy(message = "")
+                }
+            }
+
+            is DetailActions.OnUnauthorized -> {
+                viewModelScope.launch {
+                    _navigationSharedFlow.emit(DetailEvents.NavigateToLogin())
+                }
+            }
         }
+
     }
 
 }

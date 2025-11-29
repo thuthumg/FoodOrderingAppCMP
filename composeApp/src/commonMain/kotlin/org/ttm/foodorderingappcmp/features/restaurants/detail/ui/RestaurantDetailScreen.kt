@@ -18,6 +18,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +38,7 @@ import coil3.compose.SubcomposeAsyncImage
 import foodorderingappcmp.composeapp.generated.resources.Res
 import foodorderingappcmp.composeapp.generated.resources.image_not_supported
 import foodorderingappcmp.composeapp.generated.resources.view_my_cart
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -50,7 +52,8 @@ import org.ttm.foodorderingappcmp.core.MARGIN_LARGE
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM_2
 import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_2X
-import org.ttm.foodorderingappcmp.features.restaurants.data.vos.FoodItemVO
+import org.ttm.foodorderingappcmp.features.restaurants.detail.actions.DetailActions
+import org.ttm.foodorderingappcmp.features.restaurants.detail.events.DetailEvents
 import org.ttm.foodorderingappcmp.features.restaurants.detail.state.RestaurantDetailState
 import org.ttm.foodorderingappcmp.features.restaurants.detail.viewmodel.RestaurantDetailViewModel
 
@@ -60,23 +63,35 @@ fun RestaurantDetailRoute(
     restaurantViewModel: RestaurantDetailViewModel,
     onTapBack: () -> Unit,
     onTapViewMyCart: () -> Unit,
+    onNavigateToLogin: () -> Unit
 ) {
 
     val restaurantDetailState by restaurantViewModel.restaurantDetailState.collectAsStateWithLifecycle()
 
+
+    LaunchedEffect(Unit){
+        restaurantViewModel.navigationSharedFlow.collectLatest {
+            when(it){
+                is DetailEvents.NavigateToCart -> {
+                    onTapViewMyCart()
+                }
+                is DetailEvents.NavigateToHome -> {
+                    onTapBack()
+                }
+                is DetailEvents.NavigateToLogin -> {
+                    onNavigateToLogin()
+                }
+            }
+        }
+    }
+
+
+
+
     RestaurantDetailScreen(
         restaurantDetailState = restaurantDetailState,
-        onTapBack = {
-           onTapBack()
-        },
-        onTapViewMyCart = {
-            onTapViewMyCart()
-        },
-        onTapAddToCart = { foodItemVO ->
-            restaurantViewModel.addToCart(foodItemVO)
-        },
-        onDismissErrorAlertDialog = {
-            restaurantViewModel.onDismissErrorAlertDialog()
+        onAction = {
+            restaurantViewModel.onAction(it)
         }
     )
 }
@@ -86,10 +101,7 @@ fun RestaurantDetailRoute(
 @Composable
 fun RestaurantDetailScreen(
     restaurantDetailState: RestaurantDetailState,
-    onTapBack: () -> Unit,
-    onTapViewMyCart: () -> Unit,
-    onTapAddToCart: (FoodItemVO) -> Unit,
-    onDismissErrorAlertDialog: () -> Unit
+    onAction: (DetailActions) -> Unit
 ) {
 
     val verticalScrollState = rememberLazyListState()
@@ -97,7 +109,9 @@ fun RestaurantDetailScreen(
 
     val coroutineScope = rememberCoroutineScope()
 
-    var selected by remember { mutableStateOf(0) }
+    //var selected by remember { mutableStateOf(0) }
+
+
     val tabs = restaurantDetailState.restaurantVO?.foodCategories?.map { it.name } ?: listOf()
 
 
@@ -110,12 +124,18 @@ fun RestaurantDetailScreen(
     }
 
     /************* API Call Error ********************/
-    if (restaurantDetailState.message.isNotBlank() && (restaurantDetailState.errorDialogShowStatus)) {
+    if (restaurantDetailState.message.isNotBlank()) {
         CommonAlertDialog(
             title = "Error",
             message = restaurantDetailState.message,
             onConfirm = {
-                onDismissErrorAlertDialog()
+                if(restaurantDetailState.loginStatus){
+                    onAction(DetailActions.OnUnauthorized())
+                }else{
+                    onAction(DetailActions.OnErrorDialogDismissed())
+                }
+
+
             }
         )
     }
@@ -143,7 +163,7 @@ fun RestaurantDetailScreen(
             FoodOrderingAppTopAppBar(
                 title = restaurantDetailState.restaurantVO?.name ?: "",
                 onTapBack = {
-                    onTapBack()
+                   onAction(DetailActions.OnTapBack())
                 })
         }
     ) { innerPadding ->
@@ -161,20 +181,23 @@ fun RestaurantDetailScreen(
                 }
 
                 stickyHeader {
-                    Surface(color = SCREEN_BG_COLOR, modifier = Modifier.onGloballyPositioned {
-                        stickyHeaderHeightPx = it.size.height
-                    }) {
+                    Surface(color = SCREEN_BG_COLOR,
+//                        modifier = Modifier.onGloballyPositioned {
+//                        stickyHeaderHeightPx = it.size.height
+//                    }
+                    ) {
 
                         CategoryTabListSection(
                             horizontalScrollState = horizontalScrollState,
                             modifier = Modifier.padding(top = MARGIN_MEDIUM_2),
                             tabs = tabs,
-                            selectedIndex = selected,
+                            selectedIndex = restaurantDetailState.selectedTab,
                             onSelect = {
                                 coroutineScope.launch {
-                                    selected = it
-                                    verticalScrollState.animateScrollToItem(selected + 2, -100)
-                                    horizontalScrollState.animateScrollToItem(selected)
+                                  //  selected = it
+                                    onAction(DetailActions.OnTapCategoryTab(it))
+                                    verticalScrollState.animateScrollToItem(restaurantDetailState.selectedTab + 2, -100)
+                                    horizontalScrollState.animateScrollToItem(restaurantDetailState.selectedTab)
                                 }
 
                             }
@@ -195,9 +218,9 @@ fun RestaurantDetailScreen(
                             (category.foodItems).forEach { foodItem->
                                 ItemDetailSection(
                                     foodItem,
-                                    onTapAddToCart = { it ->
-                                        onTapAddToCart(foodItem)
+                                    onTapAddToCart = {
 
+                                        onAction(DetailActions.OnTapAdd(foodItem))
                                     }
                                 )
                             }
@@ -211,7 +234,7 @@ fun RestaurantDetailScreen(
             if (restaurantDetailState.showViewMyCart) {
                 ViewMyCartSection(
                     onTapViewMyCart = {
-                        onTapViewMyCart()
+                        onAction(DetailActions.OnTapViewMyCart())
                     }
                 )
 

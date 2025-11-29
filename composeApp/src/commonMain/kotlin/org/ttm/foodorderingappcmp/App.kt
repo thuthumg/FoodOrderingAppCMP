@@ -190,6 +190,7 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
                 val args = backStackEntry.toRoute<NavRoutes.RestaurantDetail>()
 
                 val viewModel = viewModel { RestaurantDetailViewModel(args.restaurantId) }
+                val loginViewModel = viewModel { LoginViewModel() }
 
                 RestaurantDetailRoute(
                     restaurantViewModel = viewModel,
@@ -198,7 +199,17 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
                     },
                     onTapViewMyCart = {
                         navController.navigate(NavRoutes.Cart)
-                    }
+                    },
+                    onNavigateToLogin = {
+                        apiToken = ""
+                        loginViewModel.clearUserData()
+
+                        navController.navigate(NavRoutes.Login) {
+                            popUpTo(NavRoutes.Home::class) {
+                                inclusive = true
+                            }
+                        }
+                    },
                 )
 
             }

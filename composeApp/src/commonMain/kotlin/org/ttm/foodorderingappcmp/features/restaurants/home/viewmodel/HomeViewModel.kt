@@ -45,7 +45,7 @@ class HomeViewModel: ViewModel() {
                             it.copy(
                                 loading = false,
                                 message = result.message,
-                                //errorDialogShowStatus = true
+                                loginStatus = true
                             )
                         }
                     }else{
@@ -53,17 +53,9 @@ class HomeViewModel: ViewModel() {
                             it.copy(
                                 loading = false,
                                 message = result.message,
-                                // errorDialogShowStatus = true
+                                loginStatus = false
                             )
                         }
-                    }
-
-                    _state.update {
-                        it.copy(
-                            loading = false,
-                            message = result.message,
-                            // errorDialogShowStatus = true
-                        )
                     }
                 }
 
@@ -72,7 +64,7 @@ class HomeViewModel: ViewModel() {
                         restaurantList =  result.data,
                         loading = false,
                         message = "",
-                       // errorDialogShowStatus = false
+                        loginStatus = false
                     )
                 }
             }
@@ -108,13 +100,9 @@ class HomeViewModel: ViewModel() {
             }
 
             is HomeActions.OnUnauthorized -> {
-                _state.update {
-                    it.copy(
-                        loading = false,
-                        message = "",
-                        loginStatus = true
-                    )
-                }
+               viewModelScope.launch {
+                   _navigationSharedFlow.emit(NavigateToLogin())
+               }
             }
         }
 

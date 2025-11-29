@@ -59,8 +59,12 @@ object RestaurantRepository {
 
                 Resource.Success(responseData)
 
+            }catch (e: UnauthorizedException) {
+                Resource.Error(message = e.message)
+            } catch (e: IOException) {
+                Resource.Error("Network error! Check your internet connection.")
             } catch (e: Exception) {
-                Resource.Error(e.message  ?: "Something went wrong!")
+                Resource.Error(e.message ?: "Something went wrong!")
             }
 
         }
