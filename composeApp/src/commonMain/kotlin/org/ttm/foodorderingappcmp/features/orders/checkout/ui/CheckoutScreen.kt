@@ -27,6 +27,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import foodorderingappcmp.composeapp.generated.resources.Res
 import foodorderingappcmp.composeapp.generated.resources.card_number
 import foodorderingappcmp.composeapp.generated.resources.checkout
@@ -52,6 +53,8 @@ import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_2X
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_3X
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
+import org.ttm.foodorderingappcmp.features.orders.checkout.actions.CheckoutActions
+import org.ttm.foodorderingappcmp.features.orders.checkout.events.CheckoutEvents
 import org.ttm.foodorderingappcmp.features.orders.checkout.state.CheckoutState
 import org.ttm.foodorderingappcmp.features.orders.checkout.viewmodel.CheckoutViewModel
 
@@ -65,33 +68,20 @@ fun CheckoutRoute(
     val checkoutState by checkoutViewModel.state.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit){
-        checkoutViewModel.onNavigateToOrderReview.collect { shouldNavigate ->
-            if(shouldNavigate){
-                onNavigateToOrderReview()
+        checkoutViewModel.navigationSharedFlow.collect { events ->
+            when(events){
+                is CheckoutEvents.OnNavigateToCart -> onTapBack()
+                is CheckoutEvents.OnNavigateToOrderReview -> onNavigateToOrderReview()
             }
         }
     }
 
     CheckoutScreen(
-        state = checkoutState,
-        onTapBack = {
-            onTapBack()
-        },
-        onTapPlaceOrder = { cardNumber, expireDate, cvv, nameOnCard, deliveryAddress ->
-            checkoutViewModel.addDeliveryAddressAndPayment(
-                cardNumber,
-                expireDate,
-                cvv,
-                nameOnCard,
-                deliveryAddress
-            )
-        },
-//        onNavigateToOrderReview = {
-//            onNavigateToOrderReview()
-//        },
-        onDismissErrorAlertDialog = {
-            checkoutViewModel.onDismissErrorAlertDialog()
+        checkoutState = checkoutState,
+        onActions = {
+           checkoutViewModel.onAction(it)
         }
+
     )
 
 }
@@ -99,30 +89,22 @@ fun CheckoutRoute(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CheckoutScreen(
-    state: CheckoutState,
-    onTapBack: () -> Unit,
-    onTapPlaceOrder: (
-        cardNumber: String,
-        expireDate: String,
-        cvv: String,
-        nameOnCard: String,
-        deliveryAddress: String,
-    ) -> Unit,
-   // onNavigateToOrderReview: () -> Unit,
-    onDismissErrorAlertDialog: () -> Unit
+    checkoutState: CheckoutState,
+    onActions: (CheckoutActions) -> Unit
+
 
 ) {
 
-    var cardNumber by remember { mutableStateOf("") }
-    var mm_yy by remember { mutableStateOf("") }
-    var cvv by remember { mutableStateOf("") }
-    var nameOnCard by remember { mutableStateOf("") }
-    var fullAddress by remember { mutableStateOf("") }
+   // var cardNumber by remember { mutableStateOf("") }
+  //  var mm_yy by remember { mutableStateOf("") }
+  //  var cvv by remember { mutableStateOf("") }
+  //  var nameOnCard by remember { mutableStateOf("") }
+  //  var fullAddress by remember { mutableStateOf("") }
     var saveForFutureUse by remember { mutableStateOf(false) }
 
 
     /*************Loading State*********************/
-    if (state.loading) {
+    if (checkoutState.loading) {
         LoadingDialog(
             onDismissRequest = {}
         )
@@ -138,12 +120,12 @@ fun CheckoutScreen(
 
 
         /*************API Call Error State*********************/
-        if (state.message.isNotBlank() && (state.errorDialogShowStatus)) {
+        if (checkoutState.message.isNotBlank()) {
             CommonAlertDialog(
                 title = "Error",
-                message = state.message,
+                message = checkoutState.message,
                 onConfirm = {
-                    onDismissErrorAlertDialog()
+                    onActions(CheckoutActions.OnErrorDialogDismissed())
                 }
             )
         }
@@ -157,7 +139,7 @@ fun CheckoutScreen(
             FoodOrderingAppTopAppBar(
                 stringResource(Res.string.checkout),
                 onTapBack = {
-                    onTapBack()
+                    onActions(CheckoutActions.OnTapBack())
                 })
         }
     ) { innerPadding ->
@@ -186,9 +168,10 @@ fun CheckoutScreen(
 
                 //Card number input section
                 FoodOrderingAppOutlineTxtField(
-                    value = cardNumber,
+                    value = checkoutState.cardNumber,
                     onValueChange = { text ->
-                        cardNumber = text
+                       // cardNumber = text
+                        onActions(CheckoutActions.OnCardNumberChanged(text))
                     },
                     txt = stringResource(Res.string.card_number),
                     isPasswordField = false,
@@ -206,9 +189,10 @@ fun CheckoutScreen(
                     horizontalArrangement = Arrangement.spacedBy(MARGIN_MEDIUM_2)
                 ) {
                     FoodOrderingAppOutlineTxtField(
-                        value = mm_yy,
+                        value = checkoutState.expiryDate,
                         onValueChange = { text ->
-                            mm_yy = text
+                           // mm_yy = text
+                            onActions(CheckoutActions.OnCardExpiryDateChanged(text))
                         },
                         txt = stringResource(Res.string.mm_yy),
                         isPasswordField = false,
@@ -221,9 +205,10 @@ fun CheckoutScreen(
                     )
 
                     FoodOrderingAppOutlineTxtField(
-                        value = cvv,
+                        value = checkoutState.cvv,
                         onValueChange = { text ->
-                            cvv = text
+                           // cvv = text
+                            onActions(CheckoutActions.OnCvvChanged(text))
                         },
                         txt = stringResource(Res.string.cvv),
                         isPasswordField = false,
@@ -239,9 +224,10 @@ fun CheckoutScreen(
                 // Name on Card
                 FoodOrderingAppOutlineTxtField(
 
-                    value = nameOnCard,
+                    value = checkoutState.nameOnCard,
                     onValueChange = { text ->
-                        nameOnCard = text
+                        //nameOnCard = text
+                        onActions(CheckoutActions.OnCardNameChanged(text))
 
                     },
                     txt = stringResource(Res.string.name_on_card),
@@ -266,9 +252,10 @@ fun CheckoutScreen(
                 // Full Address
                 FoodOrderingAppOutlineTxtField(
 
-                    value = fullAddress,
+                    value = checkoutState.deliveryAddress,
                     onValueChange = { text ->
-                        fullAddress = text
+                      //  fullAddress = text
+                        onActions(CheckoutActions.OnDeliveryAddressChanged(text))
 
                     },
                     txt = stringResource(Res.string.full_address),
@@ -295,13 +282,7 @@ fun CheckoutScreen(
             //Log in Button Section
             FoodOrderingAppButton(
                 onTapButton = {
-                    onTapPlaceOrder(
-                        cardNumber,
-                        mm_yy,
-                        cvv,
-                        nameOnCard,
-                        fullAddress
-                    )
+                    onActions(CheckoutActions.OnTapPlaceOrder())
                 },
                 modifier =
                     Modifier

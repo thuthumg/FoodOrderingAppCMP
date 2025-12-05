@@ -5,8 +5,10 @@ import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
+import org.ttm.foodorderingappcmp.core.network.FoodOrderingError
+import org.ttm.foodorderingappcmp.core.network.FoodOrderingResult
 import org.ttm.foodorderingappcmp.core.network.HttpClientProvider
-import org.ttm.foodorderingappcmp.core.network.transformResult
+import org.ttm.foodorderingappcmp.core.network.safeApiCall
 import org.ttm.foodorderingappcmp.core.utils.DELIVERY_ADDRESS_AND_PAYMENT_METHOD
 import org.ttm.foodorderingappcmp.core.utils.GET_DELIVERY_ADDRESS_AND_PAYMENT_METHODS
 import org.ttm.foodorderingappcmp.core.utils.GET_ORDERS_FOR_USER
@@ -28,51 +30,54 @@ object OrderApiServiceImpl: OrderApiService {
         cvv: String,
         nameOnCard: String,
         deliveryAddress: String,
-    ): DeliveryAddressAndPaymentVO {
-        val httpResponse = HttpClientProvider.httpClient.post(DELIVERY_ADDRESS_AND_PAYMENT_METHOD){
-            header(HttpHeaders.Authorization,"Bearer $apiToken")
-            setBody(
-                DeliveryAddressAndPaymentVO(
-                    paymentMethod = PaymentVO(
-                        cardNumber = cardNumber,
-                        expiryDate = expireDate,
-                        cvv = cvv.toInt(),
-                        nameOnCard = nameOnCard
-                    ),
-                    deliveryAddress = DeliveryAddressVO(
-                        streetAddress = deliveryAddress
+    ): FoodOrderingResult<DeliveryAddressAndPaymentVO, FoodOrderingError> {
+
+        return safeApiCall {
+            HttpClientProvider.httpClient.post(DELIVERY_ADDRESS_AND_PAYMENT_METHOD){
+                header(HttpHeaders.Authorization,"Bearer $apiToken")
+                setBody(
+                    DeliveryAddressAndPaymentVO(
+                        paymentMethod = PaymentVO(
+                            cardNumber = cardNumber,
+                            expiryDate = expireDate,
+                            cvv = cvv.toInt(),
+                            nameOnCard = nameOnCard
+                        ),
+                        deliveryAddress = DeliveryAddressVO(
+                            streetAddress = deliveryAddress
+                        )
                     )
                 )
-            )
+            }
         }
-
-        return transformResult<DeliveryAddressAndPaymentVO>(httpResponse)
     }
 
-    override suspend fun getDeliveryAddressesAndPaymentMethods(): DeliveryAddressAndPaymentListVO {
-        val httpResponse = HttpClientProvider.httpClient.get(
-            GET_DELIVERY_ADDRESS_AND_PAYMENT_METHODS
-        ){
-            header(HttpHeaders.Authorization,"Bearer $apiToken")
-        }
+    override suspend fun getDeliveryAddressesAndPaymentMethods(): FoodOrderingResult<DeliveryAddressAndPaymentListVO, FoodOrderingError> {
 
-        return transformResult<DeliveryAddressAndPaymentListVO>(httpResponse)
+        return safeApiCall {
+            HttpClientProvider.httpClient.get(
+                GET_DELIVERY_ADDRESS_AND_PAYMENT_METHODS
+            ){
+                header(HttpHeaders.Authorization,"Bearer $apiToken")
+            }
+        }
     }
 
-    override suspend fun submitOrder(submitOrderRequest: SubmitOrderRequest): OrderItemVO {
-        val httpResponse = HttpClientProvider.httpClient.post(SUBMIT_ORDER){
+    override suspend fun submitOrder(submitOrderRequest: SubmitOrderRequest): FoodOrderingResult<OrderItemVO, FoodOrderingError> {
+
+        return safeApiCall { HttpClientProvider.httpClient.post(SUBMIT_ORDER){
             header(HttpHeaders.Authorization,"Bearer $apiToken")
             setBody(submitOrderRequest)
         }
-
-        return transformResult<OrderItemVO>(httpResponse)
+        }
     }
 
-    override suspend fun getOrdersForUser(): List<OrderItemVO>? {
-       val httpResponse = HttpClientProvider.httpClient.get(GET_ORDERS_FOR_USER){
-           header(HttpHeaders.Authorization,"Bearer $apiToken")
-       }
+    override suspend fun getOrdersForUser(): FoodOrderingResult<List<OrderItemVO>?, FoodOrderingError> {
 
-        return transformResult<List<OrderItemVO>?>(httpResponse)
+        return safeApiCall {
+            HttpClientProvider.httpClient.get(GET_ORDERS_FOR_USER){
+                header(HttpHeaders.Authorization,"Bearer $apiToken")
+            }
+        }
     }
 }

@@ -50,6 +50,8 @@ import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_2X
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_3X
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
+import org.ttm.foodorderingappcmp.features.orders.order_review.actions.OrderReviewActions
+import org.ttm.foodorderingappcmp.features.orders.order_review.events.OrderReviewEvents
 import org.ttm.foodorderingappcmp.features.orders.order_review.state.OrderReviewState
 import org.ttm.foodorderingappcmp.features.orders.order_review.viewmodel.OrderReviewViewModel
 import org.ttm.foodorderingappcmp.features.restaurants.data.vos.FoodItemVO
@@ -63,9 +65,10 @@ fun OrderReviewRoute(viewModel: OrderReviewViewModel,
     val orderReviewState by viewModel.orderReviewState.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
-        viewModel.onNavigateToConfirmOrder.collect { shouldNavigate ->
-            if (shouldNavigate) {
-                onNavigateToOrderConfirmation()
+        viewModel.navigationSharedFlow.collect { events ->
+            when(events){
+                is OrderReviewEvents.OnNavigateToCart -> onTapBack()
+                is OrderReviewEvents.OnNavigateToOrderConfirm -> onNavigateToOrderConfirmation()
             }
         }
     }
@@ -73,13 +76,16 @@ fun OrderReviewRoute(viewModel: OrderReviewViewModel,
 
     OrderReviewScreen(
         orderReviewState = orderReviewState,
-        onTapBack = onTapBack,
-        onTapConfirmOrder = { paymentId, deliveryAddressId, foodItemList ->
-            viewModel.submitOrder(paymentId,deliveryAddressId,foodItemList)
-        },
-        onDismissErrorAlertDialog = {
-            viewModel.onDismissErrorAlertDialog()
-        },
+        onActions = {
+            viewModel.onAction(it)
+        }
+//        onTapBack = onTapBack,
+//        onTapConfirmOrder = { paymentId, deliveryAddressId, foodItemList ->
+//            viewModel.submitOrder(paymentId,deliveryAddressId,foodItemList)
+//        },
+//        onDismissErrorAlertDialog = {
+//            viewModel.onDismissErrorAlertDialog()
+//        },
        // onNavigateToOrderConfirmation = onNavigateToOrderConfirmation,
 //       onNavigateToOrderConfirmation onOrderSubmitHandled = {
 //            viewModel.onOrderSubmitHandled()
@@ -90,10 +96,11 @@ fun OrderReviewRoute(viewModel: OrderReviewViewModel,
 @Composable
 fun OrderReviewScreen(
     orderReviewState: OrderReviewState,
-    onTapBack: () -> Unit,
-    onTapConfirmOrder: (Long, Long,  List<FoodItemVO>) -> Unit,
-    onDismissErrorAlertDialog: () -> Unit,
-   // onOrderSubmitHandled: () -> Unit
+    onActions: (OrderReviewActions) -> Unit
+//    onTapBack: () -> Unit,
+//    onTapConfirmOrder: (Long, Long,  List<FoodItemVO>) -> Unit,
+//    onDismissErrorAlertDialog: () -> Unit,
+
 ) {
 
 
@@ -105,14 +112,14 @@ fun OrderReviewScreen(
     }
 
     /************* API Call Error State *********************/
-    if (orderReviewState.message.isNotBlank() && (orderReviewState.errorDialogShowStatus)) {
+    if (orderReviewState.message.isNotBlank()) {
 
         CommonAlertDialog(
             title = "Error",
             message = orderReviewState.message,
             onConfirm = {
-                onDismissErrorAlertDialog()
 
+                onActions(OrderReviewActions.OnErrorDialogDismissed())
             }
         )
     }
@@ -132,7 +139,7 @@ fun OrderReviewScreen(
             FoodOrderingAppTopAppBar(
                 stringResource(Res.string.review_order),
                 onTapBack = {
-                    onTapBack()
+                    onActions(OrderReviewActions.OnTapBack())
                 })
         }
     ) { innerPadding ->
@@ -321,12 +328,12 @@ fun OrderReviewScreen(
 
                 FoodOrderingAppButton(
                     onTapButton = {
-
-                        onTapConfirmOrder(
-                              orderReviewState.deliveryAddressAndPaymentVO?.paymentMethod?.id ?: -1,
-                              orderReviewState.deliveryAddressAndPaymentVO?.deliveryAddress?.id ?: -1,
+                        onActions(OrderReviewActions.OnTapConfirmOrder(
+                            orderReviewState.deliveryAddressAndPaymentVO?.paymentMethod?.id ?: -1,
+                            orderReviewState.deliveryAddressAndPaymentVO?.deliveryAddress?.id ?: -1,
                             orderReviewState.shoppingCartList
-                        )
+                        ))
+
                     },
                     modifier =
                         Modifier

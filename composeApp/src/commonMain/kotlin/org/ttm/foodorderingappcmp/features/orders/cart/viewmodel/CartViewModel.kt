@@ -2,11 +2,17 @@ package org.ttm.foodorderingappcmp.features.orders.cart.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.ttm.foodorderingappcmp.core.network.Resource
+import org.ttm.foodorderingappcmp.core.network.FoodOrderingErrorEnums
+import org.ttm.foodorderingappcmp.core.network.FoodOrderingResult
+import org.ttm.foodorderingappcmp.features.orders.cart.actions.CartActions
+import org.ttm.foodorderingappcmp.features.orders.cart.events.CartEvents
+import org.ttm.foodorderingappcmp.features.orders.cart.events.CartEvents.*
 import org.ttm.foodorderingappcmp.features.orders.cart.state.CartState
 import org.ttm.foodorderingappcmp.features.orders.data.repository.CartRepository
 import org.ttm.foodorderingappcmp.features.orders.data.repository.CheckoutRepository
@@ -15,7 +21,7 @@ import org.ttm.foodorderingappcmp.features.orders.data.vos.PaymentVO
 import org.ttm.foodorderingappcmp.features.orders.data.vos.DeliveryAddressAndPaymentVO
 import org.ttm.foodorderingappcmp.features.restaurants.data.vos.FoodItemVO
 
-class CartViewModel: ViewModel() {
+class CartViewModel : ViewModel() {
 
 
     val cartRepository = CartRepository
@@ -26,183 +32,318 @@ class CartViewModel: ViewModel() {
 
     val cartState = _state.asStateFlow()
 
+    private val _navigationSharedFlow = MutableSharedFlow<CartEvents>()
+    val navigationSharedFlow = _navigationSharedFlow.asSharedFlow()
+
+
     init {
         getAllCartList()
 
     }
-    fun getAllCartList(){
+
+    fun getAllCartList() {
         viewModelScope.launch {
 
-            _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
+            _state.update { it.copy(loading = true, message = "", loginStatus = false) }
 
-            when(val result = cartRepository.getAllCartFromDbFlow()){
-                is Resource.Error -> _state.update {
+
+            cartRepository.getAllCartFromDbFlow().collect { cardList ->
+                _state.update {
                     it.copy(
+                        foodItemList = cardList ?: listOf(),
                         loading = false,
-                        message = result.message,
-                        successStatus = false,
-                        errorDialogShowStatus = true
+                        message = "",
+                        loginStatus = false
                     )
                 }
-                is Resource.Success ->{
-                    result.data.collect { cardList ->
-                        _state.update {
-                            it.copy(
-                                foodItemList =  cardList ?: listOf(),
-                                loading = false,
-                                message = "",
-                                successStatus = true,
-                                errorDialogShowStatus = false
-                            )
-                        }
-                    }
-
-                }
             }
+
+//            when (val result = cartRepository.getAllCartFromDbFlow()) {
+//                is FoodOrderingResult.Failure -> {
+//                    if (result.message == "Unauthorized (401)") {
+//                        _state.update {
+//                            it.copy(
+//                                loading = false,
+//                                message = result.message,
+//                                loginStatus = true
+//                            )
+//                        }
+//                    } else {
+//                        _state.update {
+//                            it.copy(
+//                                loading = false,
+//                                message = result.message,
+//                                loginStatus = false
+//                            )
+//                        }
+//                    }
+//                }
+//
+//                is FoodOrderingResult.Success -> {
+//                    result.data.collect { cardList ->
+//                        _state.update {
+//                            it.copy(
+//                                foodItemList = cardList ?: listOf(),
+//                                loading = false,
+//                                message = "",
+//                                loginStatus = false
+//                            )
+//                        }
+//                    }
+//
+//                }
+//            }
         }
     }
 
-    fun onDismissErrorAlertDialog() {
-        _state.update {
-            it.copy(loading = false, errorDialogShowStatus = false, message = "")
-        }
-    }
 
-    fun onDecreaseItemQty(foodItemVO: FoodItemVO) {
+    private fun onDecreaseItemQty(foodItemVO: FoodItemVO) {
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
+            _state.update { it.copy(loading = true, loginStatus = false, message = "") }
 
-            if ((foodItemVO.quantity ?: 0)>= 1) {
+            if ((foodItemVO.quantity ?: 0) >= 1) {
                 cartRepository.insertCart(foodItemVO)
-               // getAllCartList()
+                // getAllCartList()
             } else {
                 _state.update {
                     it.copy(
                         message = "",
                         loading = false,
                         showRemoveItemDialog = true,
-                        removeItem = foodItemVO)
-                }
-            }
-        }
-    }
-    fun onDismissRemoveItemDialog() {
-        _state.update {
-            it.copy(loading = false,
-                showRemoveItemDialog = false,
-                message = "")
-        }
-    }
-
-    fun deleteCart(foodItemVO: FoodItemVO){
-        viewModelScope.launch {
-            _state.update {
-                it.copy(loading = false,
-                    showRemoveItemDialog = false,
-                    message = "")
-            }
-            cartRepository.deleteCart(foodItemVO)
-          //  getAllCartList()
-
-        }
-    }
-
-    fun onIncreaseItemQty(foodItemVO: FoodItemVO) {
-        viewModelScope.launch {
-            _state.update { it.copy(loading = true,
-                errorDialogShowStatus = false,
-                message = "") }
-
-            cartRepository.insertCart(foodItemVO)
-           // getAllCartList()
-        }
-    }
-
-
-    fun getDeliveryAddressesAndPaymentMethods(){
-        viewModelScope.launch {
-
-            _state.update { it.copy(loading = true,
-                errorDialogShowStatus = false,
-                message = ""
-            )
-            }
-
-            when(val result = cartRepository.getDeliveryAddressesAndPaymentMethods()){
-                is Resource.Error -> _state.update {
-                    it.copy(
-                        loading = false,
-                        message = result.message,
-                        successStatus = false,
-                        errorDialogShowStatus = true,
-                        deliveryAddressAndPaymentListVO = null
+                        removeItem = foodItemVO
                     )
                 }
-                is Resource.Success ->{
-                    if(result.data.deliveryAddresses.isNotEmpty() && result.data.paymentMethods.isNotEmpty()){
-                        _state.update {
-                            it.copy(
-                                loading = false,
-                                message = "",
-                                successStatus = true,
-                                errorDialogShowStatus = false,
-                                showDeliveryPaymentDialog = true,
-                                deliveryAddressAndPaymentListVO = result.data
-                            )
-                        }
-                    }else{
-                        _state.update {
-                            it.copy(
-                                loading = false,
-                                message = "",
-                                successStatus = true,
-                                errorDialogShowStatus = false,
-                                showDeliveryPaymentDialog = false,
-                                deliveryAddressAndPaymentListVO = result.data
-                            )
-                        }
+            }
+        }
+    }
+
+    private fun deleteCart(foodItemVO: FoodItemVO) {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    loading = false,
+                    showRemoveItemDialog = false,
+                    message = ""
+                )
+            }
+            cartRepository.deleteCart(foodItemVO)
+            //  getAllCartList()
+
+        }
+    }
+
+    private fun onIncreaseItemQty(foodItemVO: FoodItemVO) {
+        viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    loading = true,
+                    loginStatus = false,
+                    message = ""
+                )
+            }
+
+            cartRepository.insertCart(foodItemVO)
+            // getAllCartList()
+        }
+    }
+
+
+    private fun getDeliveryAddressesAndPaymentMethods() {
+        viewModelScope.launch {
+
+            _state.update {
+                it.copy(
+                    loading = true,
+                    message = "",
+                    loginStatus = false
+                )
+            }
+
+            cartRepository.getDeliveryAddressesAndPaymentMethods(onSuccess = { listVO ->
+
+                if (listVO.deliveryAddresses.isNotEmpty() && listVO.paymentMethods.isNotEmpty()) {
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            message = "",
+                            showDeliveryPaymentDialog = true,
+                            deliveryAddressAndPaymentListVO = listVO
+                        )
+                    }
+
+                } else {
+
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            message = "",
+                            showDeliveryPaymentDialog = false,
+                            deliveryAddressAndPaymentListVO = null
+                        )
+                    }
+
+                    launch {
+                        _navigationSharedFlow.emit(OnNavigateToCheckOut())
                     }
 
                 }
-            }
+            }, onFailure = {message,type ->
+                when(type){
+
+                    FoodOrderingErrorEnums.Remote.UNAUTHORIZED -> {
+                        _state.update {
+                            it.copy(
+                                loading = false,
+                                message = message,
+                                loginStatus = true
+                            )
+                        }
+                    }
+                    else -> {
+                        _state.update {
+                            it.copy(
+                                loading = false,
+                                message = message,
+                                loginStatus = false
+                            )
+                        }
+                    }
+                }
+
+            })
+
+
         }
     }
-    fun onDismissDeliveryPaymentDialog() {
-        viewModelScope.launch {
-            _state.update {
-                it.copy(loading = false,
-                    showDeliveryPaymentDialog = null,
-                    deliveryAddressAndPaymentListVO = null,
-                    message = "")
-            }
-        }
-
-    }
-
-    fun onTapConfirm(deliveryAddressVO: DeliveryAddressVO,paymentVO: PaymentVO){
+    private fun onTapConfirm(deliveryAddressVO: DeliveryAddressVO, paymentVO: PaymentVO) {
 
         viewModelScope.launch {
-                checkoutRepository.deleteAllDeliveryAddressAndPayment()
-                checkoutRepository.insertDeliveryAddressAndPayment(
-                    DeliveryAddressAndPaymentVO(
+
+            checkoutRepository.deleteAllDeliveryAddressAndPayment()
+            checkoutRepository.insertDeliveryAddressAndPayment(
+                DeliveryAddressAndPaymentVO(
                     deliveryAddress = deliveryAddressVO,
                     paymentMethod = paymentVO
-                    )
                 )
+            )
 
             _state.update {
-                it.copy(loading = false,
-                    showDeliveryPaymentDialog = null,
+                it.copy(
+                    loading = false,
+                    showDeliveryPaymentDialog = false,
                     deliveryAddressAndPaymentListVO = null,
-                    message = "")
+                    message = ""
+                )
             }
 
 
 
+            launch {
+                _navigationSharedFlow.emit(OnNavigateToReviewOrder())
+
+            }
+
+
         }
-
-
     }
 
+    fun onAction(action: CartActions) {
+        when (action) {
+            is CartActions.OnTapBack -> {
+                viewModelScope.launch {
+                    _navigationSharedFlow.emit(OnNavigateToDetail())
+                }
+            }
 
+            is CartActions.OnTapPlaceOrder -> {
+                getDeliveryAddressesAndPaymentMethods()
+            }
+
+            is CartActions.OnErrorDialogDismissed -> {
+                _state.update {
+                    it.copy(message = "")
+                }
+            }
+
+            is CartActions.OnUnauthorizedDialogDismissed -> {
+                _state.update {
+                    it.copy(message = "", loginStatus = false)
+                }
+
+                viewModelScope.launch {
+                    _navigationSharedFlow.emit(OnNavigateToLogin())
+                }
+            }
+
+            is CartActions.OnTapConfirm -> {
+                onTapConfirm(
+                    deliveryAddressVO = action.deliveryAddressVO,
+                    paymentVO = action.paymentVO
+                )
+            }
+
+            is CartActions.OnTapOrder -> {
+                viewModelScope.launch {
+                    _navigationSharedFlow.emit(OnNavigateToHome())
+                }
+            }
+
+            is CartActions.OnTapAddNew -> {
+
+                viewModelScope.launch {
+                        _navigationSharedFlow.emit(OnNavigateToCheckOut())
+
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            showDeliveryPaymentDialog = false,
+                            deliveryAddressAndPaymentListVO = null,
+                            message = ""
+                        )
+                    }
+
+
+                }
+            }
+
+            is CartActions.OnTapDecreaseBtn -> {
+                onDecreaseItemQty(action.foodItemVO)
+            }
+
+            is CartActions.OnTapIncreaseBtn -> {
+                onIncreaseItemQty(action.foodItemVO)
+
+            }
+
+            is CartActions.OnRemoveItemDialogDismissed -> {
+                viewModelScope.launch {
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            showRemoveItemDialog = false,
+                            message = ""
+                        )
+                    }
+                }
+
+            }
+
+            is CartActions.OnDeliveryPaymentDialogDismissed -> {
+                viewModelScope.launch {
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            showDeliveryPaymentDialog = false,
+                            deliveryAddressAndPaymentListVO = null,
+                            message = ""
+                        )
+                    }
+                }
+            }
+
+            is CartActions.OnTapDeleteCart -> {
+                deleteCart(action.foodItemVO)
+            }
+        }
+    }
 }

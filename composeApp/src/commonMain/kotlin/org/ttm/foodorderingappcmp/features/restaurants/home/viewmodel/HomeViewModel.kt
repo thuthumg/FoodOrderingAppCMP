@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.ttm.foodorderingappcmp.core.network.Resource
+import org.ttm.foodorderingappcmp.core.network.FoodOrderingErrorEnums
 import org.ttm.foodorderingappcmp.features.restaurants.data.repository.RestaurantRepository
 import org.ttm.foodorderingappcmp.features.restaurants.home.actions.HomeActions
 import org.ttm.foodorderingappcmp.features.restaurants.home.events.HomeEvents
@@ -35,43 +35,45 @@ class HomeViewModel: ViewModel() {
     fun getAllRestaurants(){
         viewModelScope.launch {
 
-            _state.update { it.copy(loading = true,
+            _state.update {
+                it.copy(loading = true,
                 message = "") }
 
-            when(val result = restaurantRepository.getAllRestaurants()){
-                is Resource.Error -> {
-                    if (result.message == "Unauthorized (401)"){
-                        _state.update {
-                            it.copy(
-                                loading = false,
-                                message = result.message,
-                                loginStatus = true
-                            )
+            restaurantRepository.getAllRestaurants(
+                onSuccess = { restaurantList ->
+                    _state.update {
+                        it.copy(
+                            restaurantList =  restaurantList,
+                            loading = false,
+                            message = "",
+                            loginStatus = false
+                        )
+                    }
+                },
+                onFailure = { message, type ->
+                    when(type){
+                        FoodOrderingErrorEnums.Remote.UNAUTHORIZED -> {
+                            _state.update {
+                                it.copy(
+                                    loading = false,
+                                    message = message,
+                                    loginStatus = true
+                                )
+                            }
                         }
-                    }else{
-                        _state.update {
-                            it.copy(
-                                loading = false,
-                                message = result.message,
-                                loginStatus = false
-                            )
+                        else -> {
+                            _state.update {
+                                it.copy(
+                                    loading = false,
+                                    message = message,
+                                    loginStatus = false
+                                )
+                            }
                         }
                     }
+
                 }
-
-                is Resource.Success -> _state.update {
-                    it.copy(
-                        restaurantList =  result.data,
-                        loading = false,
-                        message = "",
-                        loginStatus = false
-                    )
-                }
-            }
-
-
-
-
+            )
         }
     }
     fun onAction(action: HomeActions){
@@ -101,7 +103,16 @@ class HomeViewModel: ViewModel() {
 
             is HomeActions.OnUnauthorized -> {
                viewModelScope.launch {
-                   _navigationSharedFlow.emit(NavigateToLogin())
+                   _state.update {
+                       it.copy(
+                           loading = false,
+                           message = "",
+                           loginStatus = false
+                       )
+                   }
+                   launch {
+                       _navigationSharedFlow.emit(NavigateToLogin())
+                   }
                }
             }
         }

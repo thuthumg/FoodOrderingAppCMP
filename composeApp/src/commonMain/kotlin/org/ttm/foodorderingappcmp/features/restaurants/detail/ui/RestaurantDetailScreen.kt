@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -63,23 +64,33 @@ fun RestaurantDetailRoute(
     restaurantViewModel: RestaurantDetailViewModel,
     onTapBack: () -> Unit,
     onTapViewMyCart: () -> Unit,
-    onNavigateToLogin: () -> Unit
+    onNavigateToLogin: () -> Unit,
 ) {
+
+     val verticalScrollState = rememberLazyListState()
+     val horizontalScrollState = rememberLazyListState()
 
     val restaurantDetailState by restaurantViewModel.restaurantDetailState.collectAsStateWithLifecycle()
 
 
-    LaunchedEffect(Unit){
-        restaurantViewModel.navigationSharedFlow.collectLatest {
-            when(it){
+    LaunchedEffect(Unit) {
+        restaurantViewModel.navigationSharedFlow.collectLatest { events ->
+            when (events) {
                 is DetailEvents.NavigateToCart -> {
                     onTapViewMyCart()
                 }
+
                 is DetailEvents.NavigateToHome -> {
                     onTapBack()
                 }
+
                 is DetailEvents.NavigateToLogin -> {
                     onNavigateToLogin()
+                }
+
+                is DetailEvents.ScrollToTab -> {
+                    verticalScrollState.animateScrollToItem( events.selectedIndex + 2, -100)
+                    horizontalScrollState.animateScrollToItem(events.selectedIndex)
                 }
             }
         }
@@ -90,9 +101,12 @@ fun RestaurantDetailRoute(
 
     RestaurantDetailScreen(
         restaurantDetailState = restaurantDetailState,
+        verticalScrollState = verticalScrollState,
+        horizontalScrollState = horizontalScrollState,
         onAction = {
             restaurantViewModel.onAction(it)
-        }
+        },
+
     )
 }
 
@@ -101,11 +115,14 @@ fun RestaurantDetailRoute(
 @Composable
 fun RestaurantDetailScreen(
     restaurantDetailState: RestaurantDetailState,
-    onAction: (DetailActions) -> Unit
+     verticalScrollState: LazyListState,
+     horizontalScrollState: LazyListState,
+    onAction: (DetailActions) -> Unit,
+
 ) {
 
-    val verticalScrollState = rememberLazyListState()
-    val horizontalScrollState = rememberLazyListState()
+   // val verticalScrollState = rememberLazyListState()
+   // val horizontalScrollState = rememberLazyListState()
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -113,7 +130,6 @@ fun RestaurantDetailScreen(
 
 
     val tabs = restaurantDetailState.restaurantVO?.foodCategories?.map { it.name } ?: listOf()
-
 
 
     /************* Loading ********************/
@@ -129,9 +145,9 @@ fun RestaurantDetailScreen(
             title = "Error",
             message = restaurantDetailState.message,
             onConfirm = {
-                if(restaurantDetailState.loginStatus){
+                if (restaurantDetailState.loginStatus) {
                     onAction(DetailActions.OnUnauthorized())
-                }else{
+                } else {
                     onAction(DetailActions.OnErrorDialogDismissed())
                 }
 
@@ -139,21 +155,6 @@ fun RestaurantDetailScreen(
             }
         )
     }
-
-
-//
-//    val density = LocalDensity.current
-//
-//// e.g. 56.dp toolbar + 8.dp gap
-//    val topOffsetDp = 56.dp + 8.dp
-//    val topOffsetPx = with(density) { topOffsetDp.roundToPx() }
-    val windowInfo = LocalWindowInfo.current.containerSize // unit => pixel
-    val screenHeight = with(LocalDensity.current){ windowInfo.height.toDp().roundToPx()}
-
-    var stickyHeaderHeightPx by remember { mutableIntStateOf(0) }
-    val density = LocalDensity.current
-    val topOffsetPx = with(density){
-        with(density) { stickyHeaderHeightPx.toDp() }.roundToPx()}
 
     /***************** Restaurant Detail Screen ********************************/
     Scaffold(
@@ -163,7 +164,7 @@ fun RestaurantDetailScreen(
             FoodOrderingAppTopAppBar(
                 title = restaurantDetailState.restaurantVO?.name ?: "",
                 onTapBack = {
-                   onAction(DetailActions.OnTapBack())
+                    onAction(DetailActions.OnTapBack())
                 })
         }
     ) { innerPadding ->
@@ -181,11 +182,7 @@ fun RestaurantDetailScreen(
                 }
 
                 stickyHeader {
-                    Surface(color = SCREEN_BG_COLOR,
-//                        modifier = Modifier.onGloballyPositioned {
-//                        stickyHeaderHeightPx = it.size.height
-//                    }
-                    ) {
+                    Surface(color = SCREEN_BG_COLOR) {
 
                         CategoryTabListSection(
                             horizontalScrollState = horizontalScrollState,
@@ -194,10 +191,11 @@ fun RestaurantDetailScreen(
                             selectedIndex = restaurantDetailState.selectedTab,
                             onSelect = {
                                 coroutineScope.launch {
-                                  //  selected = it
+//                                    selected = it
+//                                    verticalScrollState.animateScrollToItem(it + 2, -100)
+//                                    horizontalScrollState.animateScrollToItem(it)
                                     onAction(DetailActions.OnTapCategoryTab(it))
-                                    verticalScrollState.animateScrollToItem(restaurantDetailState.selectedTab + 2, -100)
-                                    horizontalScrollState.animateScrollToItem(restaurantDetailState.selectedTab)
+
                                 }
 
                             }
@@ -215,7 +213,7 @@ fun RestaurantDetailScreen(
                                 headerName = category.name,
                                 modifier = Modifier.padding(top = MARGIN_LARGE)
                             )
-                            (category.foodItems).forEach { foodItem->
+                            (category.foodItems).forEach { foodItem ->
                                 ItemDetailSection(
                                     foodItem,
                                     onTapAddToCart = {

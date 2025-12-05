@@ -10,9 +10,10 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.ttm.foodorderingappcmp.auth.actions.RegisterActions
 import org.ttm.foodorderingappcmp.auth.data.repository.LoginRegisterRepository
+import org.ttm.foodorderingappcmp.auth.events.LoginEvents.NavigateToHome
 import org.ttm.foodorderingappcmp.auth.events.RegisterEvents
 import org.ttm.foodorderingappcmp.auth.ui.state.RegisterState
-import org.ttm.foodorderingappcmp.core.network.Resource
+import org.ttm.foodorderingappcmp.core.network.FoodOrderingResult
 import org.ttm.foodorderingappcmp.core.utils.apiToken
 import org.ttm.foodorderingappcmp.core.utils.emailRegex
 
@@ -55,12 +56,13 @@ class RegisterViewModel : ViewModel() {
                 )
             }
 
-            when (val result = loginRegisterRepo.register(
+
+            loginRegisterRepo.register(
                 email = _registerState.value.email,
                 fullName = _registerState.value.fullName,
-                password = _registerState.value.password
-            )) {
-                is Resource.Success ->{
+                password = _registerState.value.password,
+                onSuccess = { user ->
+                    // update UI state
                     _registerState.update {
                         it.copy(
                             loading = false,
@@ -68,17 +70,25 @@ class RegisterViewModel : ViewModel() {
                         )
                     }
 
-                    apiToken = result.data.accessToken ?: ""
+                    apiToken = user.accessToken ?: ""
 
-                    _navigationSharedFlow.emit(RegisterEvents.NavigateToHome())
+                    launch {
+                        _navigationSharedFlow.emit(RegisterEvents.NavigateToHome())
+                    }
+
+
+                },
+                onFailure = { message, type ->
+                    _registerState.update {
+                        it.copy(
+                            loading = false,
+                            message = message
+                        )
+                    }
                 }
-                is Resource.Error -> _registerState.update {
-                    it.copy(
-                        loading = false,
-                        message = result.message
-                    )
-                }
-            }
+            )
+
+
         }
     }
 

@@ -2,12 +2,18 @@ package org.ttm.foodorderingappcmp.features.forgot_password.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.ttm.foodorderingappcmp.core.network.Resource
+import org.ttm.foodorderingappcmp.core.network.FoodOrderingErrorEnums
+import org.ttm.foodorderingappcmp.features.forgot_password.actions.ResetPasswordActions
 import org.ttm.foodorderingappcmp.features.forgot_password.data.repository.ForgotPasswordRepository
+import org.ttm.foodorderingappcmp.features.forgot_password.events.ForgotPasswordEvents
+import org.ttm.foodorderingappcmp.features.forgot_password.events.ResetPasswordEvents
+import org.ttm.foodorderingappcmp.features.forgot_password.events.ResetPasswordEvents.*
 import org.ttm.foodorderingappcmp.features.forgot_password.ui.state.ResetPasswordState
 
 class ResetPasswordViewModel(val email: String): ViewModel(){
@@ -17,14 +23,18 @@ val forgotPasswordRepository = ForgotPasswordRepository
 private val _state = MutableStateFlow(ResetPasswordState())
 val resetPasswordState = _state.asStateFlow()
 
+    private val _navigationSharedFlow: MutableSharedFlow<ResetPasswordEvents> = MutableSharedFlow()
 
-fun forgotPassword(password: String,confirmPassword: String){
+    val navigationSharedFlow = _navigationSharedFlow.asSharedFlow()
+
+
+    fun forgotPassword(){
 
 
     val errorMessage = when {
-        password.isBlank() -> "Password is required."
-        confirmPassword.isBlank() -> "ConfirmPassword is required."
-        (password != confirmPassword) -> "Passwords do not match."
+        _state.value.password.isBlank() -> "Password is required."
+        _state.value.confirmPassword.isBlank() -> "ConfirmPassword is required."
+        (_state.value.password != _state.value.confirmPassword) -> "Passwords do not match."
         else -> null
     }
 
@@ -33,7 +43,7 @@ fun forgotPassword(password: String,confirmPassword: String){
             it.copy(
                 loading = false,
                 message = errorMessage,
-                errorDialogShowStatus = true,
+               // errorDialogShowStatus = true,
             )
         }
         return
@@ -42,48 +52,144 @@ fun forgotPassword(password: String,confirmPassword: String){
 
 
     viewModelScope.launch {
-        _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
+        _state.update { it.copy(loading = true,
+           // errorDialogShowStatus = false,
+            message = "") }
 
-            when(val result = forgotPasswordRepository.forgotPassword(email = email, password = password)){
-                is Resource.Error -> _state.update {
-                    it.copy(
-                        loading = false,
-                        message = result.message,
-                        resetPasswordStatus = false,
-                        errorDialogShowStatus = true
-                    )
-                }
-                is Resource.Success -> _state.update {
+        forgotPasswordRepository.forgotPassword(
+            email = email,
+            password = _state.value.password,
+            onSuccess = {
+                _state.update {
                     it.copy(
                         loading = false,
                         message = "Password reset successful. Please log in with your new password.",
-                        resetPasswordStatus = true,
-                        errorDialogShowStatus = false
+                        showSuccessDialog = true,
+                        loginStatus = false
+                       // resetPasswordStatus = true,
+                       // errorDialogShowStatus = false
+                    )
+                }
+            },
+            onFailure = { message, type ->
+                when(type){
+
+                    FoodOrderingErrorEnums.Remote.UNAUTHORIZED -> {
+                        _state.update {
+                            it.copy(
+                                loading = false,
+                                message = message,
+                                loginStatus = true,
+                                showSuccessDialog = false
+                               // resetPasswordStatus = false,
+                               // errorDialogShowStatus = true
+                            )
+                        }
+                    }
+                    else -> {
+                        _state.update {
+                            it.copy(
+                                loading = false,
+                                message = message,
+                                loginStatus = false,
+                                showSuccessDialog = false
+                               // resetPasswordStatus = false,
+                               // errorDialogShowStatus = true
+                            )
+                        }
+                    }
+                }
+
+            }
+        )
+    }
+}
+
+//
+//fun onDismissErrorAlertDialog() {
+//    _state.update {
+//        it.copy(loading = false, errorDialogShowStatus = false, message = "")
+//    }
+//}
+
+//fun onDismissSuccessAlertDialog() {
+//        _state.update {
+//            it.copy(loading = false,
+//                errorDialogShowStatus = false,
+//                resetPasswordStatus = false,
+//                goToLoginStatus = true,
+//                message = "")
+//        }
+//    }
+
+    fun onAction(resetPasswordActions: ResetPasswordActions){
+        when(resetPasswordActions){
+            is ResetPasswordActions.OnConfirmPasswordChanged -> {
+                _state.update {
+                    it.copy(
+                        loading = false,
+                        message = "",
+                        loginStatus = false,
+                        confirmPassword = resetPasswordActions.confirmPassword
+                    )
+                }
+            }
+            is ResetPasswordActions.OnPasswordChanged -> {
+                _state.update {
+                    it.copy(
+                        loading = false,
+                        message = "",
+                        loginStatus = false,
+                        password = resetPasswordActions.password
+                    )
+                }
+            }
+            is ResetPasswordActions.OnTapBack -> {
+                viewModelScope.launch {
+                    _navigationSharedFlow.emit(NavigateToForgotPassword())
+                }
+            }
+            is ResetPasswordActions.OnTapResetPassword -> {
+                forgotPassword()
+//                _state.update {
+//                    it.copy(
+//                        loading = false,
+//                        message = "",
+//                        loginStatus = false,
+//                        showSuccessDialog = true
+//                        // resetPasswordStatus = false,
+//                        // errorDialogShowStatus = true
+//                    )
+//                }
+            }
+
+            is ResetPasswordActions.OnErrorDialogDismissed -> {
+                _state.update {
+                    it.copy(
+                        loading = false,
+                        message = "",
+                        loginStatus = false,
+                        showSuccessDialog = false
+                    )
+                }
+            }
+            is ResetPasswordActions.OnUnauthorized -> {
+                _state.update {
+                    it.copy(
+                        loading = false,
+                        message = "",
+                        loginStatus = true,
+                        showSuccessDialog = false
                     )
                 }
             }
 
+            is ResetPasswordActions.OnTapOK -> {
+                viewModelScope.launch {
+                    _navigationSharedFlow.emit(NavigateToLogin())
+                }
 
-
-
-
-    }
-}
-
-
-fun onDismissErrorAlertDialog() {
-    _state.update {
-        it.copy(loading = false, errorDialogShowStatus = false, message = "")
-    }
-}
-
-fun onDismissSuccessAlertDialog() {
-        _state.update {
-            it.copy(loading = false,
-                errorDialogShowStatus = false,
-                resetPasswordStatus = false,
-                goToLoginStatus = true,
-                message = "")
+            }
         }
     }
 

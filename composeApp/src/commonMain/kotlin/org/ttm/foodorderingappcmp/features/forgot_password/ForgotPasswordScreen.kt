@@ -28,6 +28,7 @@ import foodorderingappcmp.composeapp.generated.resources.email
 import foodorderingappcmp.composeapp.generated.resources.forgot_password_desc
 import foodorderingappcmp.composeapp.generated.resources.forgot_password_title
 import foodorderingappcmp.composeapp.generated.resources.forgot_password_txt
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.stringResource
 import org.ttm.foodorderingappcmp.common.ui.CommonAlertDialog
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppButton
@@ -41,36 +42,55 @@ import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_2X
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_3X
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
 import org.ttm.foodorderingappcmp.core.utils.apiToken
+import org.ttm.foodorderingappcmp.features.forgot_password.actions.ForgotPasswordActions
+import org.ttm.foodorderingappcmp.features.forgot_password.events.ForgotPasswordEvents
 import org.ttm.foodorderingappcmp.features.forgot_password.ui.state.ForgotPasswordState
 import org.ttm.foodorderingappcmp.features.forgot_password.ui.viewmodel.ForgotPasswordViewModel
 
 @Composable
 fun ForgotPasswordRoute(forgotPasswordViewModel: ForgotPasswordViewModel,
                         onTapBack: () -> Unit,
-                        onNavigateToResetPassword: (String) -> Unit) {
+                        onNavigateToResetPassword: (String) -> Unit,
+                        onTapLogin:() -> Unit) {
 
     val forgotPasswordState by forgotPasswordViewModel.forgotPasswordState.collectAsStateWithLifecycle()
 
 
     LaunchedEffect(Unit){
-        forgotPasswordViewModel.onNavigateToResetPassword.collect { checkEmailResponse ->
-            apiToken = checkEmailResponse.resetPasswordToken
-            onNavigateToResetPassword(checkEmailResponse.user.email)
+        forgotPasswordViewModel.navigationSharedFlow.collectLatest { events ->
+            when(events){
+                is ForgotPasswordEvents.NavigateToHome -> {
+                    onTapBack()
+                }
+                is ForgotPasswordEvents.NavigateToLogin -> {
+                    onTapLogin()
+                }
+                is ForgotPasswordEvents.NavigateToResetPassword ->{
+                    onNavigateToResetPassword(events.data)
+                }
+            }
         }
+//        forgotPasswordViewModel.onNavigateToResetPassword.collect { checkEmailResponse ->
+//            apiToken = checkEmailResponse.resetPasswordToken
+//            onNavigateToResetPassword(checkEmailResponse.user.email)
+//        }
     }
 
 
     ForgotPasswordScreen(
         forgotPasswordState = forgotPasswordState,
-        onTapBack = {
-            onTapBack()
+        onAction = {
+            forgotPasswordViewModel.onAction(it)
         },
-        onTapContinue = { email ->
-           forgotPasswordViewModel.checkEmail(email)
-        },
-        onDismissErrorAlertDialog = {
-            forgotPasswordViewModel.onDismissErrorAlertDialog()
-        },
+//        onTapBack = {
+//            onTapBack()
+//        },
+//        onTapContinue = { email ->
+//           forgotPasswordViewModel.checkEmail(email)
+//        },
+//        onDismissErrorAlertDialog = {
+//            forgotPasswordViewModel.onDismissErrorAlertDialog()
+//        },
 //        onNavigateToResetPassword = { email->
 //            onNavigateToResetPassword(email)
 //            forgotPasswordViewModel.onTapContinueHandled()
@@ -80,12 +100,12 @@ fun ForgotPasswordRoute(forgotPasswordViewModel: ForgotPasswordViewModel,
 }
 @Composable
 fun ForgotPasswordScreen(forgotPasswordState: ForgotPasswordState,
-                         onTapBack: () -> Unit,
-                         onTapContinue: (String)-> Unit,
-                         onDismissErrorAlertDialog: () -> Unit,
-                       //  onNavigateToResetPassword: (String) -> Unit
+                         onAction: (ForgotPasswordActions) -> Unit
+                        // onTapBack: () -> Unit,
+                        // onTapContinue: (String)-> Unit,
+                        // onDismissErrorAlertDialog: () -> Unit
 ) {
-    var email by remember{ mutableStateOf("") }
+   // var email by remember{ mutableStateOf("") }
 
     /************* Loading State *********************/
     if (forgotPasswordState.loading) {
@@ -95,13 +115,19 @@ fun ForgotPasswordScreen(forgotPasswordState: ForgotPasswordState,
     }
 
     /************* API Call Error State *********************/
-    if (forgotPasswordState.message.isNotBlank() && (forgotPasswordState.errorDialogShowStatus)) {
+    if (forgotPasswordState.message.isNotEmpty()) {
 
         CommonAlertDialog(
             title = "Error",
             message = forgotPasswordState.message,
             onConfirm = {
-                onDismissErrorAlertDialog()
+                if(forgotPasswordState.loginStatus){
+                    onAction(ForgotPasswordActions.OnUnauthorized())
+                }
+                else{
+                    onAction(ForgotPasswordActions.OnErrorDialogDismissed())
+                }
+
 
             }
         )
@@ -123,7 +149,7 @@ fun ForgotPasswordScreen(forgotPasswordState: ForgotPasswordState,
             FoodOrderingAppTopAppBar(
                 stringResource(Res.string.forgot_password_title),
                 onTapBack = {
-                    onTapBack()
+                    onAction(ForgotPasswordActions.OnTapBack())
                 })
         }
     ) { innerPadding ->
@@ -156,9 +182,10 @@ fun ForgotPasswordScreen(forgotPasswordState: ForgotPasswordState,
 
                 //Email input section
                 FoodOrderingAppOutlineTxtField(
-                    value = email,
+                    value = forgotPasswordState.email,
                     onValueChange = { text ->
-                        email = text
+                       // email = text
+                        onAction(ForgotPasswordActions.OnEmailChanged(text))
                     },
                     txt = stringResource(Res.string.email),
                     isPasswordField = false,
@@ -174,7 +201,8 @@ fun ForgotPasswordScreen(forgotPasswordState: ForgotPasswordState,
             //Continue Button Section
             FoodOrderingAppButton(
                 onTapButton = {
-                    onTapContinue(email)
+
+                    onAction(ForgotPasswordActions.OnTapContinue())
                 },
                 modifier =
                     Modifier

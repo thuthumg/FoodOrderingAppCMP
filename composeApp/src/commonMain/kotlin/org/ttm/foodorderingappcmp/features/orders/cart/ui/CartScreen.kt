@@ -19,6 +19,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +34,7 @@ import foodorderingappcmp.composeapp.generated.resources.empty_cart
 import foodorderingappcmp.composeapp.generated.resources.order_now
 import foodorderingappcmp.composeapp.generated.resources.place_order
 import foodorderingappcmp.composeapp.generated.resources.total
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.ttm.foodorderingappcmp.common.ui.CommonAlertDialog
@@ -51,11 +53,14 @@ import org.ttm.foodorderingappcmp.core.TEXT_LARGE
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_2X
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
+import org.ttm.foodorderingappcmp.features.orders.cart.actions.CartActions
+import org.ttm.foodorderingappcmp.features.orders.cart.events.CartEvents
 import org.ttm.foodorderingappcmp.features.orders.cart.state.CartState
 import org.ttm.foodorderingappcmp.features.orders.cart.viewmodel.CartViewModel
 import org.ttm.foodorderingappcmp.features.orders.data.vos.DeliveryAddressVO
 import org.ttm.foodorderingappcmp.features.orders.data.vos.PaymentVO
 import org.ttm.foodorderingappcmp.features.restaurants.data.vos.FoodItemVO
+import org.ttm.foodorderingappcmp.features.restaurants.detail.actions.DetailActions
 
 @Composable
 fun CartRoute(
@@ -64,47 +69,40 @@ fun CartRoute(
     onNavigateToCheckout: () -> Unit,
     onTapOrderNow: () -> Unit,
     onNavigateToReviewOrder: () -> Unit,
+    onNavigateToLogin: () -> Unit
 ) {
     val cartState by cartViewModel.cartState.collectAsStateWithLifecycle()
 
+
+    LaunchedEffect(Unit){
+        cartViewModel.navigationSharedFlow.collectLatest { events ->
+            when(events){
+                is CartEvents.OnNavigateToCheckOut -> {
+                    onNavigateToCheckout()
+                }
+
+                is CartEvents.OnNavigateToDetail -> {
+                    onTapBack()
+                }
+                is CartEvents.OnNavigateToHome -> {
+                    onTapOrderNow()
+                }
+                is CartEvents.OnNavigateToLogin -> {
+                    onNavigateToLogin()
+                }
+                is CartEvents.OnNavigateToReviewOrder -> {
+                    onNavigateToReviewOrder()
+                }
+            }
+        }
+    }
+
+
+
     CartScreen(
         cartState = cartState,
-        onTapBack = onTapBack,
-        onTapPlaceOrder = {
-            cartViewModel.getDeliveryAddressesAndPaymentMethods()
-        },
-        onTapOrderNow = onTapOrderNow,
-        onIncrease = { foodItemVO ->
-            cartViewModel.onIncreaseItemQty(foodItemVO)
-        },
-        onDecrease = { foodItemVO ->
-            cartViewModel.onDecreaseItemQty(foodItemVO)
-        },
-        onDismissErrorAlertDialog = {
-            cartViewModel.onDismissErrorAlertDialog()
-
-        },
-        onDismissRemoveItemDialog = {
-            cartViewModel.onDismissRemoveItemDialog()
-
-        },
-        deleteCart = {
-            cartViewModel.deleteCart(it)
-        },
-        onTapConfirm = { deliveryAddressVO, paymentVO ->
-            cartViewModel.onTapConfirm(deliveryAddressVO, paymentVO)
-            onNavigateToReviewOrder()
-        },
-        onTapAddNew = {
-            cartViewModel.onDismissDeliveryPaymentDialog()
-            onNavigateToCheckout()
-        },
-        onDismissDeliveryPaymentDialog = {
-            cartViewModel.onDismissDeliveryPaymentDialog()
-        },
-        onNavigateToCheckout = {
-            cartViewModel.onDismissDeliveryPaymentDialog()
-            onNavigateToCheckout()
+        onAction = {
+            cartViewModel.onAction(it)
         }
     )
 
@@ -114,19 +112,7 @@ fun CartRoute(
 @Composable
 fun CartScreen(
     cartState: CartState,
-    onTapBack: () -> Unit,
-    onTapPlaceOrder: () -> Unit,
-    onTapOrderNow: () -> Unit,
-    onIncrease: (FoodItemVO) -> Unit,
-    onDecrease: (FoodItemVO) -> Unit,
-    onDismissErrorAlertDialog: () -> Unit,
-    onDismissRemoveItemDialog: () -> Unit,
-    deleteCart: (FoodItemVO) -> Unit,
-    onTapConfirm: (DeliveryAddressVO, PaymentVO) -> Unit,
-    onTapAddNew: () -> Unit,
-    onDismissDeliveryPaymentDialog: () -> Unit,
-    onNavigateToCheckout: () -> Unit,
-) {
+    onAction: (CartActions) -> Unit) {
 
     /*************Loading State*********************/
     if (cartState.loading) {
@@ -136,13 +122,17 @@ fun CartScreen(
     }
 
     /*************API Call Error State*********************/
-    if (cartState.message.isNotBlank() && (cartState.errorDialogShowStatus)) {
+    if (cartState.message.isNotBlank()) {
 
         CommonAlertDialog(
             title = "Error",
             message = cartState.message,
             onConfirm = {
-                onDismissErrorAlertDialog()
+                if(cartState.loginStatus){
+                    onAction(CartActions.OnUnauthorizedDialogDismissed())
+                }else{
+                    onAction(CartActions.OnErrorDialogDismissed())
+                }
             })
     }
 
@@ -155,47 +145,29 @@ fun CartScreen(
             dismissText = "Cancel",
             onConfirm = {
                 cartState.removeItem?.let {
-                    deleteCart(it)
+                    onAction(CartActions.OnTapDeleteCart(it))
                 }
             },
             onDismiss = {
-                onDismissRemoveItemDialog()
-
+                onAction(CartActions.OnRemoveItemDialogDismissed())
             }
         )
     }
 
     /*************Previously used Delivery Address and Payment Method Choose State*********************/
-    if (cartState.showDeliveryPaymentDialog != null && cartState.showDeliveryPaymentDialog) {
+    if (cartState.showDeliveryPaymentDialog) {
         DeliveryPaymentDialog(
             deliveryAddressAndPaymentListVO = cartState.deliveryAddressAndPaymentListVO,
             onTapConfirm = { deliveryAddressVO, paymentVO ->
-                onTapConfirm(deliveryAddressVO, paymentVO)
-
+                onAction(CartActions.OnTapConfirm(deliveryAddressVO, paymentVO))
             },
             onTapAddNew = {
-                onTapAddNew()
-
-
+                onAction(CartActions.OnTapAddNew())
             },
             onTapBack = {
-                onDismissDeliveryPaymentDialog()
-
+                onAction(CartActions.OnDeliveryPaymentDialogDismissed())
             }
         )
-    } else {
-
-        /************* No previously used delivery address or payment method *************/
-
-        cartState.deliveryAddressAndPaymentListVO?.let {
-            if (it.deliveryAddresses.isEmpty() &&
-                it.paymentMethods.isEmpty() &&
-                cartState.showDeliveryPaymentDialog == false
-            ) {
-                onNavigateToCheckout()
-
-            }
-        }
     }
 
     /****************** Shopping Cart Screen *******************************/
@@ -205,23 +177,27 @@ fun CartScreen(
             FoodOrderingAppTopAppBar(
                 stringResource(Res.string.cart),
                 onTapBack = {
-                    onTapBack()
+                    onAction(CartActions.OnTapBack())
                 })
         }
     ) { innerPadding ->
 
         if (cartState.foodItemList.isEmpty()) {
-            EmptyCartSection(innerPadding, onTapOrderNow)
+            EmptyCartSection(innerPadding, {
+                onAction(CartActions.OnTapOrder())
+            })
         } else {
             CartListSection(
                 cartState = cartState,
                 innerPadding = innerPadding,
-                onTapPlaceOrder = onTapPlaceOrder,
+                onTapPlaceOrder = {
+                    onAction(CartActions.OnTapPlaceOrder())
+                },
                 onIncrease = {
-                    onIncrease(it)
+                    onAction(CartActions.OnTapIncreaseBtn(it))
                 },
                 onDecrease = {
-                    onDecrease(it)
+                    onAction(CartActions.OnTapDecreaseBtn(it))
                 }
 
             )

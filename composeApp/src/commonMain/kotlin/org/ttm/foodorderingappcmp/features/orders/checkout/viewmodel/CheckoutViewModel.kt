@@ -9,8 +9,11 @@ import kotlinx.coroutines.flow.asStateFlow
 
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.ttm.foodorderingappcmp.core.network.FoodOrderingErrorEnums
+import org.ttm.foodorderingappcmp.features.orders.checkout.actions.CheckoutActions
 
-import org.ttm.foodorderingappcmp.core.network.Resource
+import org.ttm.foodorderingappcmp.features.orders.checkout.events.CheckoutEvents
+import org.ttm.foodorderingappcmp.features.orders.checkout.events.CheckoutEvents.*
 import org.ttm.foodorderingappcmp.features.orders.checkout.state.CheckoutState
 import org.ttm.foodorderingappcmp.features.orders.data.repository.CheckoutRepository
 
@@ -22,28 +25,21 @@ class CheckoutViewModel : ViewModel() {
 
 
     val state = _state.asStateFlow()
+    private val _navigationSharedFlow = MutableSharedFlow<CheckoutEvents>()
+    val navigationSharedFlow = _navigationSharedFlow.asSharedFlow()
 
-    private val _onNavigateToOrderReview = MutableSharedFlow<Boolean>()
 
-    val onNavigateToOrderReview = _onNavigateToOrderReview.asSharedFlow()
-
-    fun addDeliveryAddressAndPayment(
-        cardNumber: String,
-        expireDate: String,
-        cvv: String,
-        nameOnCard: String,
-        deliveryAddress: String,
-    ) {
+    fun addDeliveryAddressAndPayment() {
 
         val errorMessage = when {
-            cardNumber.isBlank() -> "Card Number is required.."
-            expireDate.isBlank() -> "Expire Date is required."
-            cvv.isBlank() -> "CVV is required."
-            nameOnCard.isBlank() -> "Name on card is required."
-            deliveryAddress.isBlank() -> "Delivery address is required."
-            !isValidCardNumber(cardNumber) -> "Invalid card number"
-            !isValidExpiryDate(expireDate) -> "Invalid expiry Date"
-            !isValidCVV(cvv) -> "Invalid CVV "
+            _state.value.cardNumber.isBlank() -> "Card Number is required.."
+            _state.value.expiryDate.isBlank() -> "Expire Date is required."
+            _state.value.cvv.isBlank() -> "CVV is required."
+            _state.value.nameOnCard.isBlank() -> "Name on card is required."
+            _state.value.deliveryAddress.isBlank() -> "Delivery address is required."
+            !isValidCardNumber(_state.value.cardNumber) -> "Invalid card number"
+            !isValidExpiryDate(_state.value.expiryDate) -> "Invalid expiry Date"
+            !isValidCVV(_state.value.cvv) -> "Invalid CVV "
             else -> null
         }
 
@@ -52,9 +48,7 @@ class CheckoutViewModel : ViewModel() {
             _state.update {
                 it.copy(
                     loading = false,
-                    message = errorMessage,
-                    checkoutApiStatus = false,
-                    errorDialogShowStatus = true
+                    message = errorMessage
                 )
             }
             return
@@ -62,52 +56,74 @@ class CheckoutViewModel : ViewModel() {
 
         viewModelScope.launch {
 
-            _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
+            _state.update { it.copy(loading = true,
+                message = "") }
 
+            checkoutRepository.addDeliveryAddressAndPayment(
+                cardNumber = _state.value.cardNumber,
+                expireDate = _state.value.expiryDate,
+                cvv = _state.value.cvv,
+                nameOnCard = _state.value.nameOnCard,
+                deliveryAddress = _state.value.deliveryAddress,
+                onSuccess = { deliveryAddressAndPaymentVO ->
 
-            when (val result = checkoutRepository.addDeliveryAddressAndPayment(
-                cardNumber = cardNumber,
-                expireDate = expireDate,
-                cvv = cvv,
-                nameOnCard = nameOnCard,
-                deliveryAddress = deliveryAddress
-            )) {
-                is Resource.Error -> _state.update {
-                    it.copy(
-                        loading = false,
-                        message = result.message,
-                        checkoutApiStatus = false,
-                        errorDialogShowStatus = true,
-                    )
-                }
-
-                is Resource.Success -> {
                     _state.update {
                         it.copy(
-                            deliveryAddressAndPaymentVO = result.data,
+                            deliveryAddressAndPaymentVO = deliveryAddressAndPaymentVO,
                             loading = false,
                             message = "",
-                            checkoutApiStatus = true,
-                            errorDialogShowStatus = false,
+                            loginStatus = false
                         )
                     }
 
-                    checkoutRepository.insertDeliveryAddressAndPayment(
-                        result.data
-                    )
+                    launch {
+                        checkoutRepository.insertDeliveryAddressAndPayment(
+                            deliveryAddressAndPaymentVO
+                        )
+                    }
+                    viewModelScope.launch {
+                        _navigationSharedFlow.emit(CheckoutEvents.OnNavigateToOrderReview())
+                    }
+                },
+                onFailure = { message, type ->
 
-                    onPlaceOrderHandled()
+
+                    when(type){
+
+                        FoodOrderingErrorEnums.Remote.UNAUTHORIZED -> {
+                            _state.update {
+                                it.copy(
+                                    loading = false,
+                                    message = message,
+                                    loginStatus = true
+                                )
+                            }
+                        }
+                        else -> {
+                            _state.update {
+                                it.copy(
+                                    loading = false,
+                                    message = message,
+                                    loginStatus = false
+                                )
+                            }
+                        }
+                    }
+
+
+
                 }
+            )
 
-            }
+
         }
     }
-
-    fun onDismissErrorAlertDialog() {
-        _state.update {
-            it.copy(loading = false, errorDialogShowStatus = false, message = "")
-        }
-    }
+//
+//    fun onDismissErrorAlertDialog() {
+//        _state.update {
+//            it.copy(loading = false,  message = "")
+//        }
+//    }
 
 
     fun isValidCardNumber(cardNumber: String): Boolean {
@@ -125,10 +141,94 @@ class CheckoutViewModel : ViewModel() {
         return cvv.matches(Regex("^[0-9]{3,4}$"))
     }
 
-    fun onPlaceOrderHandled() {
-        viewModelScope.launch {
-            _onNavigateToOrderReview.emit(true)
+    fun onAction(actions: CheckoutActions){
+        when(actions){
+            is CheckoutActions.OnCardExpiryDateChanged -> {
+
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            message ="",
+                            expiryDate = actions.expiryDate
+                        )
+
+                    }
+
+
+            }
+            is CheckoutActions.OnCardNameChanged -> {
+
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            message ="",
+                            nameOnCard = actions.nameOnCard
+                        )
+
+                    }
+
+
+            }
+            is CheckoutActions.OnCardNumberChanged -> {
+
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            message ="",
+                            cardNumber = actions.cardNumber
+                        )
+
+                    }
+
+
+            }
+            is CheckoutActions.OnCvvChanged -> {
+
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            message ="",
+                            cvv = actions.cvv
+                        )
+
+                    }
+
+
+            }
+            is CheckoutActions.OnDeliveryAddressChanged -> {
+
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            message ="",
+                            deliveryAddress = actions.deliveryAddress
+                        )
+
+                    }
+
+
+            }
+            is CheckoutActions.OnTapBack -> {
+                viewModelScope.launch {
+                    _navigationSharedFlow.emit(OnNavigateToCart())
+                }
+
+            }
+            is CheckoutActions.OnTapPlaceOrder -> {
+                addDeliveryAddressAndPayment()
+            }
+
+            is CheckoutActions.OnErrorDialogDismissed -> {
+                _state.update {
+                    it.copy(
+                        loading = false,
+                        message ="",
+                    )
+
+                }
+            }
         }
 
     }
+
 }

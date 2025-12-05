@@ -6,6 +6,10 @@ data class CheckoutState(
     val deliveryAddressAndPaymentVO: DeliveryAddressAndPaymentVO? = null,
     val loading: Boolean = false,
     val message: String = "",
-    val checkoutApiStatus: Boolean = false,
-    val errorDialogShowStatus: Boolean = false
+    val cardNumber: String = "",
+    val expiryDate: String = "",
+    val cvv: String = "",
+    val nameOnCard: String = "",
+    val deliveryAddress: String = "",
+    val loginStatus: Boolean = false
 )

@@ -3,7 +3,10 @@ package org.ttm.foodorderingappcmp.features.orders.data.repository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
-import org.ttm.foodorderingappcmp.core.network.Resource
+import org.ttm.foodorderingappcmp.core.network.FoodOrderingErrorEnums
+import org.ttm.foodorderingappcmp.core.network.FoodOrderingResult
+import org.ttm.foodorderingappcmp.core.network.onError
+import org.ttm.foodorderingappcmp.core.network.onSuccess
 import org.ttm.foodorderingappcmp.core.persistence.AppDatabaseProvider
 import org.ttm.foodorderingappcmp.features.orders.network.api_service.OrderApiService
 import org.ttm.foodorderingappcmp.features.orders.network.impl.OrderApiServiceImpl
@@ -19,23 +22,25 @@ object CheckoutRepository {
         expireDate: String,
         cvv: String,
         nameOnCard: String,
-        deliveryAddress: String
-    ): Resource<DeliveryAddressAndPaymentVO> =
+        deliveryAddress: String,
+        onSuccess: (DeliveryAddressAndPaymentVO) -> Unit,
+        onFailure: (String, FoodOrderingErrorEnums?) -> Unit
+    ) =
         withContext(Dispatchers.IO) {
-            try {
-                val responseData = orderApiService.addDeliveryAddressAndPayment(
+
+               orderApiService.addDeliveryAddressAndPayment(
                     cardNumber = cardNumber,
                     expireDate = expireDate,
                     cvv = cvv,
                     nameOnCard = nameOnCard,
                     deliveryAddress = deliveryAddress
-                )
+                ).onSuccess {
+                    onSuccess(it)
+               }.onError { error ->
+                   onFailure(error.error,error.errorType)
 
-                Resource.Success(responseData)
+               }
 
-            } catch (e: Exception) {
-                Resource.Error(e.message ?: "Something went wrong!")
-            }
 
         }
 

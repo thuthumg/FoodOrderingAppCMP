@@ -6,14 +6,16 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.ttm.foodorderingappcmp.core.network.Resource
+import org.ttm.foodorderingappcmp.core.network.FoodOrderingErrorEnums
 import org.ttm.foodorderingappcmp.features.orders.data.repository.CartRepository
 import org.ttm.foodorderingappcmp.features.orders.data.repository.OrderReviewRepository
+import org.ttm.foodorderingappcmp.features.orders.order_review.actions.OrderReviewActions
+import org.ttm.foodorderingappcmp.features.orders.order_review.events.OrderReviewEvents
+import org.ttm.foodorderingappcmp.features.orders.order_review.events.OrderReviewEvents.*
 import org.ttm.foodorderingappcmp.features.orders.order_review.state.OrderReviewState
 import org.ttm.foodorderingappcmp.features.restaurants.data.vos.FoodItemVO
 
@@ -24,14 +26,12 @@ class OrderReviewViewModel: ViewModel() {
 
     private val _state = MutableStateFlow(OrderReviewState())
 
-    private val _onNavigateToConfirmOrder = MutableSharedFlow<Boolean>()
-
-    val onNavigateToConfirmOrder = _onNavigateToConfirmOrder.asSharedFlow()
+    private val _navigationSharedFlow = MutableSharedFlow<OrderReviewEvents>()
+    val navigationSharedFlow = _navigationSharedFlow.asSharedFlow()
 
     val orderReviewState = _state.onStart {
         _state.update {
             it.copy(
-                orderSubmitStatus = false,
                 message = ""
             )
         }
@@ -49,94 +49,104 @@ class OrderReviewViewModel: ViewModel() {
 
     fun getAllCartFromDb(){
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
-
-            when(val result = cartRepository.getAllCartFromDb()){
-                is Resource.Error -> _state.update {
-                    it.copy(
-                        loading = false,
-                        message = result.message,
-                        errorDialogShowStatus = true
-                    )
-                }
-                is Resource.Success -> _state.update {
-                    it.copy(
-                        shoppingCartList =  result.data,
-                        loading = false,
-                        message = "",
-                        errorDialogShowStatus = false
-                    )
-                }
+            _state.update {
+                it.copy(
+                    shoppingCartList =  cartRepository.getAllCartFromDb(),
+                    loading = false,
+                    message = "",
+                )
             }
-
         }
     }
 
     fun getDeliveryAddressAndPaymentFromDb(){
         viewModelScope.launch {
+            _state.update {
+                it.copy(
+                    loading = false,
+                    message = "",
+                    deliveryAddressAndPaymentVO = orderReviewRepository.getDeliveryAddressAndPaymentFromDb()
+                )
 
-            _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
-
-            when(val result =   orderReviewRepository.getDeliveryAddressAndPaymentFromDb()){
-                is Resource.Error -> _state.update {
-                    it.copy(
-                        loading = false,
-                        message = result.message,
-                        errorDialogShowStatus = true
-                    )
-                }
-                is Resource.Success -> _state.update {
-                    it.copy(
-                        loading = false,
-                        message = "",
-                        errorDialogShowStatus = false,
-                        deliveryAddressAndPaymentVO = result.data
-                    )
-
-                }
             }
+
+
         }
     }
 
-    fun onDismissErrorAlertDialog() {
-        _state.update {
-            it.copy(loading = false, errorDialogShowStatus = false, message = "")
-        }
-    }
 
     fun submitOrder(paymentId: Long, deliveryAddressId: Long, foodItemList: List<FoodItemVO>) {
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
-            when(val result =  orderReviewRepository.submitOrder(paymentId,deliveryAddressId,foodItemList)){
-                is Resource.Error -> _state.update {
-                    it.copy(
-                        loading = false,
-                        message = result.message,
-                        orderSubmitStatus = false,
-                        errorDialogShowStatus = true
-                    )
-                }
-                is Resource.Success ->{
+            _state.update { it.copy(loading = true,
 
+                message = "") }
+
+            orderReviewRepository.submitOrder(paymentId,deliveryAddressId,foodItemList,
+                onSuccess = {
                     launch {cartRepository.deleteAllCart() }
 
                     _state.update {
                         it.copy(
                             loading = false,
                             message = "",
-                            orderSubmitStatus = true,
-                            errorDialogShowStatus = false
                         )
                     }
-                    onOrderSubmitHandled()
+                    viewModelScope.launch {
+                        _navigationSharedFlow.emit(OrderReviewEvents.OnNavigateToOrderConfirm())
+                    }
+                },
+                onFailure = { message, type ->
+                    when(type){
+
+                        FoodOrderingErrorEnums.Remote.UNAUTHORIZED -> {
+                            _state.update {
+                                it.copy(
+                                    loading = false,
+                                    message = message,
+                                    loginStatus = true
+                                )
+                            }
+                        }
+                        else -> {
+                            _state.update {
+                                it.copy(
+                                    loading = false,
+                                    message = message,
+                                    loginStatus = false
+                                )
+                            }
+                        }
+                    }
+
+
+                })
+
+
+        }
+
+    }
+
+
+
+    fun onAction(actions: OrderReviewActions){
+        when(actions){
+            is OrderReviewActions.OnTapBack -> {
+                viewModelScope.launch {
+                    _navigationSharedFlow.emit(OnNavigateToCart())
+                }
+            }
+            is OrderReviewActions.OnTapConfirmOrder -> {
+                submitOrder(actions.paymentId, actions.deliveryAddressId, actions.foodItemList)
+            }
+
+            is OrderReviewActions.OnErrorDialogDismissed ->{
+                _state.update {
+                    it.copy(
+                        loading = false,
+                        message = ""
+                    )
                 }
             }
         }
-    }
-    fun onOrderSubmitHandled() {
-        viewModelScope.launch {
-            _onNavigateToConfirmOrder.emit(true)
-        }
-
     }
 }

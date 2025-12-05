@@ -6,5 +6,5 @@ data class OrderListState(
     val submittedOrderItems: List<OrderItemVO> = listOf(),
     val loading: Boolean = false,
     val message: String = "",
-    val errorDialogShowStatus: Boolean = false,
+   val loginStatus: Boolean = false
 )

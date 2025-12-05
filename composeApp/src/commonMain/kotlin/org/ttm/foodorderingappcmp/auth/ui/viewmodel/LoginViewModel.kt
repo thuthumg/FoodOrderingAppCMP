@@ -13,7 +13,7 @@ import org.ttm.foodorderingappcmp.auth.data.repository.LoginRegisterRepository
 import org.ttm.foodorderingappcmp.auth.events.LoginEvents
 import org.ttm.foodorderingappcmp.auth.events.LoginEvents.*
 import org.ttm.foodorderingappcmp.auth.ui.state.LoginState
-import org.ttm.foodorderingappcmp.core.network.Resource
+import org.ttm.foodorderingappcmp.core.network.FoodOrderingResult
 import org.ttm.foodorderingappcmp.core.utils.apiToken
 import org.ttm.foodorderingappcmp.core.utils.emailRegex
 
@@ -51,13 +51,16 @@ class LoginViewModel : ViewModel() {
             return
         }
 
+
         viewModelScope.launch {
             _state.update { it.copy(loading = true,
-               // errorDialogShowStatus = true,
                 message = "") }
 
-            when (val result = loginRegisterRepo.login(_state.value.email,_state.value.password)) {
-                is Resource.Success ->{
+            loginRegisterRepo.login(
+                email = _state.value.email,
+                password = _state.value.password,
+                onSuccess = { user ->
+                    // update UI state
                     _state.update {
                         it.copy(
                             loading = false,
@@ -66,19 +69,23 @@ class LoginViewModel : ViewModel() {
 
                     }
 
-                    apiToken = result.data.accessToken ?: ""
+                    apiToken = user.accessToken ?: ""
+                    launch{
+                        _navigationSharedFlow.emit(NavigateToHome())
+                    }
 
-                    _navigationSharedFlow.emit(NavigateToHome())
+                },
+                onFailure = { message, type ->
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            message = message,
+                        )
+                    }
                 }
-
-                is Resource.Error -> _state.update {
-                    it.copy(
-                        loading = false,
-                        message = result.message,
-                    )
-                }
-            }
+            )
         }
+
 
     }
 

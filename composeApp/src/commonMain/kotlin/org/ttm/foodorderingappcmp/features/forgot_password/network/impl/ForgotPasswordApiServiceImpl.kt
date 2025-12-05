@@ -4,7 +4,10 @@ import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
+import org.ttm.foodorderingappcmp.core.network.FoodOrderingError
+import org.ttm.foodorderingappcmp.core.network.FoodOrderingResult
 import org.ttm.foodorderingappcmp.core.network.HttpClientProvider
+import org.ttm.foodorderingappcmp.core.network.safeApiCall
 import org.ttm.foodorderingappcmp.core.network.transformResult
 import org.ttm.foodorderingappcmp.core.utils.FORGET_PASSWORD
 import org.ttm.foodorderingappcmp.core.utils.FORGET_PASSWORD_CHECK_EMAIL
@@ -16,23 +19,24 @@ import org.ttm.foodorderingappcmp.features.forgot_password.request.ForgotPasswor
 
 object ForgotPasswordApiServiceImpl: ForgotPasswordApiService
 {
-    override suspend fun forgotPasswordCheckEmail(email: String): CheckEmailResponse {
-        val httpResponse = HttpClientProvider.httpClient.post(FORGET_PASSWORD_CHECK_EMAIL){
-            setBody(CheckEmailRequest(email = email))
-        }
+    override suspend fun forgotPasswordCheckEmail(email: String): FoodOrderingResult<CheckEmailResponse, FoodOrderingError> {
 
-        return transformResult<CheckEmailResponse>(httpResponse)
+        return safeApiCall {
+            HttpClientProvider.httpClient.post(FORGET_PASSWORD_CHECK_EMAIL){
+                setBody(CheckEmailRequest(email = email))
+            }
+        }
     }
 
     override suspend fun forgotPassword(
         email: String,
         password: String,
-    ) {
-        val httpResponse = HttpClientProvider.httpClient.post(FORGET_PASSWORD){
-            header(HttpHeaders.Authorization, "Bearer $apiToken")
-            setBody(ForgotPasswordRequest(email = email, password = password))
+    ): FoodOrderingResult<Unit, FoodOrderingError>{
+        return safeApiCall {
+            HttpClientProvider.httpClient.post(FORGET_PASSWORD){
+                header(HttpHeaders.Authorization, "Bearer $apiToken")
+                setBody(ForgotPasswordRequest(email = email, password = password))
+            }
         }
-
-        return transformResult<Unit>(httpResponse)
     }
 }

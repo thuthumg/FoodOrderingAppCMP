@@ -217,6 +217,7 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
             /******** Add to Cart *************/
             composable<NavRoutes.Cart> {
                 val cartViewModel = viewModel { CartViewModel() }
+                val loginViewModel = viewModel { LoginViewModel() }
                 CartRoute(
                     cartViewModel = cartViewModel,
                     onTapBack = {
@@ -234,7 +235,19 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
                     },
                     onNavigateToReviewOrder = {
                         navController.navigate(NavRoutes.OrderReview)
-                    })
+                    },
+                    onNavigateToLogin = {
+                        apiToken = ""
+                        loginViewModel.clearUserData()
+
+                        navController.navigate(NavRoutes.Login) {
+                            popUpTo(NavRoutes.Home::class) {
+                                inclusive = true
+                            }
+                        }
+
+                    }
+                    )
 
             }
 
@@ -294,6 +307,13 @@ fun App(databaseBuilder: RoomDatabase.Builder<AppDatabase>) {
                     },
                     onNavigateToResetPassword = { email ->
                         navController.navigate(NavRoutes.ResetPassword(email))
+                    },
+                    onTapLogin = {
+                        navController.navigate(NavRoutes.Login) {
+                            popUpTo(NavRoutes.ForgotPassword::class) {
+                                inclusive = true
+                            }
+                        }
                     }
                 )
 

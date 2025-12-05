@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -15,6 +16,7 @@ import org.ttm.foodorderingappcmp.common.ui.LoadingDialog
 import org.ttm.foodorderingappcmp.core.ACTION_BAR_HEIGHT
 import org.ttm.foodorderingappcmp.core.MARGIN_MEDIUM
 import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
+import org.ttm.foodorderingappcmp.features.orders.order_list.actions.OrderListActions
 import org.ttm.foodorderingappcmp.features.orders.order_list.state.OrderListState
 import org.ttm.foodorderingappcmp.features.orders.order_list.viewmodel.OrderListViewModel
 
@@ -24,14 +26,12 @@ fun FoodOrderingAppOrdersScreenRoute(orderListViewModel: OrderListViewModel,
 
     val orderListState by orderListViewModel.orderListState.collectAsStateWithLifecycle()
 
+
     FoodOrderingAppOrdersScreen(
         orderListState = orderListState,
-        onDismissErrorAlertDialog = {
-            orderListViewModel.onDismissErrorAlertDialog()
-        },
-        onTapItem = {
-            onTapItem()
-        }
+       onActions = {
+           orderListViewModel.onAction(it)
+       }
     )
 }
 
@@ -39,8 +39,11 @@ fun FoodOrderingAppOrdersScreenRoute(orderListViewModel: OrderListViewModel,
 @Composable
 fun FoodOrderingAppOrdersScreen(
     orderListState: OrderListState,
-    onDismissErrorAlertDialog:() -> Unit,
-    onTapItem: ()-> Unit) {
+   onActions: (OrderListActions) -> Unit
+//    onDismissErrorAlertDialog:() -> Unit,
+//    onTapItem: ()-> Unit
+
+) {
 
     /************* Loading State *********************/
     if (orderListState.loading) {
@@ -50,12 +53,12 @@ fun FoodOrderingAppOrdersScreen(
     }
 
     /************* API Call Error State *********************/
-    if (orderListState.message.isNotBlank() && (orderListState.errorDialogShowStatus)) {
+    if (orderListState.message.isNotBlank()) {
         CommonAlertDialog(
             title = "Error",
             message = orderListState.message,
             onConfirm = {
-                onDismissErrorAlertDialog()
+                onActions(OrderListActions.OnErrorDialogDismissed())
             }
         )
     }
@@ -79,7 +82,7 @@ fun FoodOrderingAppOrdersScreen(
             items(orderListState.submittedOrderItems.size){ index ->
                 SubmittedOrderItemRow(
                     orderItemVO = orderListState.submittedOrderItems[index],
-                    onTapItem = onTapItem
+                    onTapItem = {onActions(OrderListActions.OnTapItem())}
                 )
             }
 

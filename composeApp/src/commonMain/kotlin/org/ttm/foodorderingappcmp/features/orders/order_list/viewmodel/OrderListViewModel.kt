@@ -6,8 +6,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.ttm.foodorderingappcmp.core.network.Resource
+import org.ttm.foodorderingappcmp.core.network.FoodOrderingErrorEnums
+import org.ttm.foodorderingappcmp.core.network.FoodOrderingResult
 import org.ttm.foodorderingappcmp.features.orders.data.repository.OrderListRepository
+import org.ttm.foodorderingappcmp.features.orders.order_list.actions.OrderListActions
 import org.ttm.foodorderingappcmp.features.orders.order_list.state.OrderListState
 
 class OrderListViewModel : ViewModel() {
@@ -26,34 +28,69 @@ class OrderListViewModel : ViewModel() {
     fun getAllOrderList() {
         viewModelScope.launch {
 
-            _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
+            _state.update { it.copy(loading = true,
 
-            when (val result = orderListRepository.getOrdersForUser()) {
-                is Resource.Error -> _state.update {
-                    it.copy(
-                        loading = false,
-                        message = result.message,
-                        errorDialogShowStatus = true
-                    )
+                message = "") }
+
+
+            orderListRepository.getOrdersForUser(
+                onSuccess = { orderList ->
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            message = "",
+                            submittedOrderItems = orderList ?: listOf()
+                        )
+                    }
+                },
+                onFailure = { message, type ->
+
+                    when(type){
+
+                        FoodOrderingErrorEnums.Remote.UNAUTHORIZED -> {
+                            _state.update {
+                                it.copy(
+                                    loading = false,
+                                    message = message,
+                                    loginStatus = true
+                                )
+                            }
+                        }
+                        else -> {
+                            _state.update {
+                                it.copy(
+                                    loading = false,
+                                    message = message,
+                                    loginStatus = false
+                                )
+                            }
+                        }
+                    }
                 }
+            )
 
-                is Resource.Success -> _state.update {
+
+        }
+
+    }
+
+
+    fun onAction(actions: OrderListActions){
+        when(actions){
+            is OrderListActions.OnErrorDialogDismissed -> {
+                _state.update {
                     it.copy(
                         loading = false,
                         message = "",
-                        errorDialogShowStatus = false,
-                        submittedOrderItems = result.data ?: listOf()
-                    )
+
+                        )
                 }
+            }
+            is OrderListActions.OnTapItem -> {
 
             }
         }
-
     }
 
-    fun onDismissErrorAlertDialog() {
-        _state.update {
-            it.copy(loading = false, errorDialogShowStatus = false, message = "")
-        }
-    }
+
 }

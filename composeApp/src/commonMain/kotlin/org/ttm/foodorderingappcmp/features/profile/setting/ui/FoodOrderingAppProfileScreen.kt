@@ -17,6 +17,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,6 +36,7 @@ import foodorderingappcmp.composeapp.generated.resources.notifications
 import foodorderingappcmp.composeapp.generated.resources.payment_method
 import foodorderingappcmp.composeapp.generated.resources.profile
 import foodorderingappcmp.composeapp.generated.resources.settings
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.ttm.foodorderingappcmp.common.ui.CommonAlertDialog
@@ -50,6 +52,8 @@ import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_2X
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_3X
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
+import org.ttm.foodorderingappcmp.features.profile.actions.ProfileActions
+import org.ttm.foodorderingappcmp.features.profile.events.ProfileEvents
 import org.ttm.foodorderingappcmp.features.profile.state.ProfileState
 import org.ttm.foodorderingappcmp.features.profile.viewmodel.ProfileViewModel
 
@@ -60,29 +64,36 @@ fun FoodOrderingAppProfileRoute(profileViewModel: ProfileViewModel,
 
     val state  by profileViewModel.state.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit){
+        profileViewModel.navigationSharedFlow.collectLatest { events ->
+            when(events){
+                is ProfileEvents.OnNavigateToAbout -> onTapAbout()
+                is ProfileEvents.OnNavigateToLogin -> onNavigateToLogout()
+            }
+        }
+    }
+
     FoodOrderingAppProfileScreen(
         profileState = state,
-        onTapLogout = {
-            profileViewModel.onDismissErrorAlertDialog() },
-        onTapAbout = onTapAbout,
-        onNavigateToLogout = onNavigateToLogout
+        onAction = {
+            profileViewModel.onAction(it)
+        }
     )
 
 }
 @Composable
 fun FoodOrderingAppProfileScreen(
     profileState: ProfileState,
-    onTapLogout: () -> Unit,
-    onTapAbout:() -> Unit,
-    onNavigateToLogout: () -> Unit) {
+    onAction: (ProfileActions)-> Unit
+) {
 
     /************** Logout Status *********************/
-    if(profileState.logoutStatus){
+    if(profileState.message.isNotEmpty()){
         CommonAlertDialog(
-            title = "",
-            message = "Are you sure you want to log out? All locally stored app data will be lost.",
+            title = "Logout",
+            message = profileState.message,
             onConfirm = {
-                onNavigateToLogout()
+                onAction(ProfileActions.OnLogoutDialogDismissed())
             }
         )
     }
@@ -163,7 +174,8 @@ fun FoodOrderingAppProfileScreen(
                     //About
                     ProfileItemRow(stringResource(Res.string.about),
                         Icons.AutoMirrored.Default.ArrowForward, onTapItem = {
-                            onTapAbout()
+
+                            onAction(ProfileActions.OnTapAbout())
                         })
                 }
 
@@ -174,7 +186,7 @@ fun FoodOrderingAppProfileScreen(
             //Logout Button Section
             FoodOrderingAppButton(
                 onTapButton = {
-                    onTapLogout()
+                    onAction(ProfileActions.OnTapLogout())
                 },
                 modifier =
                     Modifier

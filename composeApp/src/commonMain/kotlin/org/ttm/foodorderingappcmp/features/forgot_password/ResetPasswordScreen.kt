@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,6 +27,7 @@ import foodorderingappcmp.composeapp.generated.resources.confirm_password
 import foodorderingappcmp.composeapp.generated.resources.password
 import foodorderingappcmp.composeapp.generated.resources.reset_password
 import foodorderingappcmp.composeapp.generated.resources.reset_password_desc
+import kotlinx.coroutines.flow.collectLatest
 import org.jetbrains.compose.resources.stringResource
 import org.ttm.foodorderingappcmp.common.ui.CommonAlertDialog
 import org.ttm.foodorderingappcmp.common.ui.FoodOrderingAppButton
@@ -39,6 +41,9 @@ import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_2X
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_3X
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
+import org.ttm.foodorderingappcmp.features.forgot_password.actions.ForgotPasswordActions
+import org.ttm.foodorderingappcmp.features.forgot_password.actions.ResetPasswordActions
+import org.ttm.foodorderingappcmp.features.forgot_password.events.ResetPasswordEvents
 import org.ttm.foodorderingappcmp.features.forgot_password.ui.state.ResetPasswordState
 import org.ttm.foodorderingappcmp.features.forgot_password.ui.viewmodel.ResetPasswordViewModel
 
@@ -49,35 +54,55 @@ fun ResetPasswordRoute(resetPasswordViewModel: ResetPasswordViewModel,
 
     val resetPasswordState by resetPasswordViewModel.resetPasswordState.collectAsStateWithLifecycle()
 
+    LaunchedEffect(Unit){
+        resetPasswordViewModel.navigationSharedFlow.collectLatest { events ->
+            when(events){
+                is ResetPasswordEvents.NavigateToForgotPassword -> {
+                    onTapBack()
+                }
+                is ResetPasswordEvents.NavigateToLogin -> {
+                    onNavigateToLogin()
+                }
+            }
+
+        }
+    }
+
+
+
     ResetPasswordScreen(
         resetPasswordState = resetPasswordState,
-        onTapBack = {
-            onTapBack()
+        onAction = {
+            resetPasswordViewModel.onAction(it)
         },
-        onTapResetPassword = { password,confirmPassword ->
-            resetPasswordViewModel.forgotPassword(password,confirmPassword)
-        },
-        onDismissErrorAlertDialog = {
-            resetPasswordViewModel.onDismissErrorAlertDialog()
-        },
-        onDismissSuccessAlertDialog = {
-            resetPasswordViewModel.onDismissSuccessAlertDialog()
-        },
-        onNavigateToLogin = onNavigateToLogin
+//        onTapBack = {
+//            onTapBack()
+//        },
+//        onTapResetPassword = { password,confirmPassword ->
+//            resetPasswordViewModel.forgotPassword(password,confirmPassword)
+//        },
+//        onDismissErrorAlertDialog = {
+//            resetPasswordViewModel.onDismissErrorAlertDialog()
+//        },
+//        onDismissSuccessAlertDialog = {
+//            resetPasswordViewModel.onDismissSuccessAlertDialog()
+//        },
+//        onNavigateToLogin = onNavigateToLogin
     )
 }
 @Composable
 fun ResetPasswordScreen(
     resetPasswordState: ResetPasswordState,
-    onTapBack: () -> Unit,
-    onTapResetPassword: (String, String) -> Unit,
-    onDismissErrorAlertDialog: ()-> Unit,
-    onDismissSuccessAlertDialog: () -> Unit,
-    onNavigateToLogin: () -> Unit
+    onAction: (ResetPasswordActions) -> Unit,
+//    onTapBack: () -> Unit,
+//    onTapResetPassword: (String, String) -> Unit,
+//    onDismissErrorAlertDialog: ()-> Unit,
+//    onDismissSuccessAlertDialog: () -> Unit,
+//    onNavigateToLogin: () -> Unit
     ) {
 
-    var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
+   // var password by remember { mutableStateOf("") }
+   // var confirmPassword by remember { mutableStateOf("") }
 
 
 
@@ -89,35 +114,33 @@ fun ResetPasswordScreen(
     }
 
     /************* API Call Error State *********************/
-    if (resetPasswordState.message.isNotBlank() && (resetPasswordState.errorDialogShowStatus)) {
+    if (resetPasswordState.message.isNotEmpty() && !resetPasswordState.showSuccessDialog) {
 
         CommonAlertDialog(
             title = "Error",
             message = resetPasswordState.message,
             onConfirm = {
-                onDismissErrorAlertDialog()
+                if(resetPasswordState.loginStatus){
+                    onAction(ResetPasswordActions.OnUnauthorized())
+                }
+                else{
+                    onAction(ResetPasswordActions.OnErrorDialogDismissed())
+                }
+
+
 
             }
         )
-    }
-    /************* API Call Success State *********************/
-    if(resetPasswordState.resetPasswordStatus) {
+    }else if (resetPasswordState.message.isNotEmpty() && resetPasswordState.showSuccessDialog) {
         CommonAlertDialog(
             title = "",
             message = resetPasswordState.message,
             onConfirm = {
-                onDismissSuccessAlertDialog()
+               onAction(ResetPasswordActions.OnTapOK())
 
             }
         )
-
     }
-
-    if(resetPasswordState.goToLoginStatus){
-        onNavigateToLogin()
-    }
-
-
 
     /************* Reset Password Screen *********************/
 
@@ -127,7 +150,7 @@ fun ResetPasswordScreen(
             FoodOrderingAppTopAppBar(
                 stringResource(Res.string.reset_password),
                 onTapBack = {
-                    onTapBack()
+                    onAction(ResetPasswordActions.OnTapBack())
                 })
         }
     ) { innerPadding ->
@@ -157,9 +180,10 @@ fun ResetPasswordScreen(
 
                 //Password input section
                 FoodOrderingAppOutlineTxtField(
-                    value = password,
+                    value = resetPasswordState.password,
                     onValueChange = { text ->
-                        password = text
+
+                        onAction(ResetPasswordActions.OnPasswordChanged(text))
                     },
                     txt = stringResource(Res.string.password),
                     isPasswordField = false,
@@ -173,9 +197,9 @@ fun ResetPasswordScreen(
 
                 //Confirm Password input section
                 FoodOrderingAppOutlineTxtField(
-                    value = confirmPassword,
+                    value = resetPasswordState.confirmPassword,
                     onValueChange = { text ->
-                        confirmPassword = text
+                        onAction(ResetPasswordActions.OnConfirmPasswordChanged(text))
                     },
                     txt = stringResource(Res.string.confirm_password),
                     isPasswordField = false,
@@ -192,7 +216,8 @@ fun ResetPasswordScreen(
             //Reset Password Button Section
             FoodOrderingAppButton(
                 onTapButton = {
-                    onTapResetPassword(password,confirmPassword)
+                   // onTapResetPassword(password,confirmPassword)
+                    onAction(ResetPasswordActions.OnTapResetPassword())
                 },
                 modifier =
                     Modifier

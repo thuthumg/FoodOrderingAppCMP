@@ -6,5 +6,7 @@ data class ForgotPasswordState (
     val checkEmailResponse: CheckEmailResponse ? = null,
     val loading: Boolean = false,
     val message: String = "",
-    val errorDialogShowStatus: Boolean = false,
+    val loginStatus: Boolean = false,
+    val email: String = ""
+    //val errorDialogShowStatus: Boolean = false,
 )

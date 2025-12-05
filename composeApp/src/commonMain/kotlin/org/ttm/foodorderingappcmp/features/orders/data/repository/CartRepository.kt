@@ -1,7 +1,13 @@
 package org.ttm.foodorderingappcmp.features.orders.data.repository
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
-import org.ttm.foodorderingappcmp.core.network.Resource
+import kotlinx.coroutines.withContext
+import org.ttm.foodorderingappcmp.core.network.FoodOrderingErrorEnums
+import org.ttm.foodorderingappcmp.core.network.FoodOrderingResult
+import org.ttm.foodorderingappcmp.core.network.onError
+import org.ttm.foodorderingappcmp.core.network.onSuccess
 import org.ttm.foodorderingappcmp.core.persistence.AppDatabaseProvider
 import org.ttm.foodorderingappcmp.features.orders.network.api_service.OrderApiService
 import org.ttm.foodorderingappcmp.features.orders.network.impl.OrderApiServiceImpl
@@ -14,29 +20,14 @@ object CartRepository {
 
     val orderApiService: OrderApiService = OrderApiServiceImpl
 
-    suspend fun getAllCartFromDb(): Resource<List<FoodItemVO>> =
-
-        try {
-
-            val responseData = appDatabase.cartDao().getAllCart()
-
-            Resource.Success(responseData)
-
-        } catch (e: Exception) {
-            Resource.Error(e.message  ?: "Something went wrong!")
-        }
+    suspend fun getAllCartFromDb(): List<FoodItemVO> =
+        appDatabase.cartDao().getAllCart()
 
 
-    fun getAllCartFromDbFlow(): Resource<Flow<List<FoodItemVO>?>> =
+    fun getAllCartFromDbFlow(): Flow<List<FoodItemVO>?> =
 
-        try {
-            val responseData = appDatabase.cartDao().getAllCartFromDbFlow()
+        appDatabase.cartDao().getAllCartFromDbFlow()
 
-            Resource.Success(responseData)
-
-        } catch (e: Exception) {
-            Resource.Error(e.message  ?: "Something went wrong!")
-        }
 
     suspend fun insertCart(foodItemVO: FoodItemVO){
         appDatabase.cartDao().insertCart(foodItemVO)
@@ -49,15 +40,18 @@ object CartRepository {
     suspend fun deleteAllCart(){
         appDatabase.cartDao().deleteAllCart()
     }
-    suspend fun getDeliveryAddressesAndPaymentMethods(): Resource<DeliveryAddressAndPaymentListVO> =
-        try {
+    suspend fun getDeliveryAddressesAndPaymentMethods(
+        onSuccess: (DeliveryAddressAndPaymentListVO) -> Unit,
+        onFailure: (String, FoodOrderingErrorEnums?) -> Unit
+    ) = withContext(Dispatchers.IO){
+        orderApiService.getDeliveryAddressesAndPaymentMethods()
+            .onSuccess { deliveryAddressAndPaymentListVO ->
+                onSuccess(deliveryAddressAndPaymentListVO)
+            }
+            .onError { error ->
+                onFailure(error.error,error.errorType)
+            }
+    }
 
-            val responseData = orderApiService.getDeliveryAddressesAndPaymentMethods()
-
-            Resource.Success(responseData)
-
-        } catch (e: Exception) {
-            Resource.Error(e.message  ?: "Something went wrong!")
-        }
 
 }

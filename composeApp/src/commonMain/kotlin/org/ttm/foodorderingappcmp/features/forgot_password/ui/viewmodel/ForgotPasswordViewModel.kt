@@ -8,10 +8,12 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.ttm.foodorderingappcmp.core.network.Resource
+import org.ttm.foodorderingappcmp.core.network.FoodOrderingErrorEnums
 import org.ttm.foodorderingappcmp.core.utils.emailRegex
+import org.ttm.foodorderingappcmp.features.forgot_password.actions.ForgotPasswordActions
 import org.ttm.foodorderingappcmp.features.forgot_password.data.repository.ForgotPasswordRepository
-import org.ttm.foodorderingappcmp.features.forgot_password.network.responses.CheckEmailResponse
+import org.ttm.foodorderingappcmp.features.forgot_password.events.ForgotPasswordEvents
+import org.ttm.foodorderingappcmp.features.forgot_password.events.ForgotPasswordEvents.*
 import org.ttm.foodorderingappcmp.features.forgot_password.ui.state.ForgotPasswordState
 
 class ForgotPasswordViewModel: ViewModel() {
@@ -21,15 +23,15 @@ class ForgotPasswordViewModel: ViewModel() {
     private val _state = MutableStateFlow(ForgotPasswordState())
     val forgotPasswordState = _state.asStateFlow()
 
-    private val _onNavigateToResetPassword = MutableSharedFlow<CheckEmailResponse>()
+    private val _navigationSharedFlow: MutableSharedFlow<ForgotPasswordEvents> = MutableSharedFlow()
 
-    val onNavigateToResetPassword = _onNavigateToResetPassword.asSharedFlow()
+    val navigationSharedFlow = _navigationSharedFlow.asSharedFlow()
 
-    fun checkEmail(email: String){
+    fun checkEmail(){
 
         val errorMessage = when {
-            email.isBlank() -> "Email is required."
-            !email.matches(emailRegex) -> "Invalid email format."
+            _state.value.email.isBlank() -> "Email is required."
+            ! _state.value.email.matches(emailRegex) -> "Invalid email format."
             else -> null
         }
 
@@ -38,7 +40,7 @@ class ForgotPasswordViewModel: ViewModel() {
                 it.copy(
                     loading = false,
                     message = errorMessage,
-                    errorDialogShowStatus = true,
+                   // errorDialogShowStatus = true,
                 )
             }
             return
@@ -48,45 +50,111 @@ class ForgotPasswordViewModel: ViewModel() {
 
 
         viewModelScope.launch {
-            _state.update { it.copy(loading = true, errorDialogShowStatus = false, message = "") }
+            _state.update { it.copy(
+                loading = true,
+                //errorDialogShowStatus = false,
+                message = "") }
 
-            when(val result = forgotPasswordRepository.forgotPasswordCheckEmail(email = email)){
-                is Resource.Error -> _state.update {
-                    it.copy(
-                        loading = false,
-                        message = result.message,
-                        errorDialogShowStatus = true
-                    )
-                }
-                is Resource.Success -> {
+            forgotPasswordRepository.forgotPasswordCheckEmail(email =  _state.value.email,
+                onSuccess = { checkEmailResponse ->
+
                     _state.update {
                         it.copy(
-                            checkEmailResponse = result.data,
+                            checkEmailResponse = checkEmailResponse,
                             loading = false,
                             message = "",
-                            errorDialogShowStatus = false
+                            //errorDialogShowStatus = false
                         )
                     }
-                    onContinueHandled(result.data)
+                    onContinueHandled(checkEmailResponse.user.email)
+                },
+                onFailure = { message,type ->
+
+                    when(type){
+
+                        FoodOrderingErrorEnums.Remote.UNAUTHORIZED -> {
+                            _state.update {
+                                it.copy(
+                                    loading = false,
+                                    message = message,
+                                    loginStatus = true
+                                )
+                            }
+                        }
+                        else -> {
+                            _state.update {
+                                it.copy(
+                                    loading = false,
+                                    message = message,
+                                    loginStatus = false
+                                )
+                            }
+                        }
+                    }
+
+
+
+
+                })
+        }
+    }
+
+    fun onContinueHandled(data: String) {
+        viewModelScope.launch {
+            _navigationSharedFlow.emit(NavigateToResetPassword(data))
+        }
+    }
+//
+//    fun onDismissErrorAlertDialog() {
+//        _state.update {
+//            it.copy(loading = false,
+//                message = "")
+//        }
+//    }
+//
+//    fun onTapContinueHandled() {
+//        _state.update { it.copy(checkEmailResponse = null) }
+//    }
+
+
+    fun onAction(action: ForgotPasswordActions){
+        when(action){
+            is ForgotPasswordActions.OnEmailChanged -> {
+                viewModelScope.launch {
+                    _state.update {
+                        it.copy(
+                            loading = false,
+                            message = "",
+                            email = action.email
+                        )
+                    }
                 }
             }
+            is ForgotPasswordActions.OnTapBack -> {
+                viewModelScope.launch {
+                    _navigationSharedFlow.emit(NavigateToHome())
+                }
 
+            }
+            is ForgotPasswordActions.OnTapContinue -> {
+                checkEmail()
+            }
+
+            is ForgotPasswordActions.OnErrorDialogDismissed -> {
+                _state.update {
+                    it.copy(
+                        loading = false,
+                        message = ""
+                    )
+                }
+            }
+            is ForgotPasswordActions.OnUnauthorized -> {
+                viewModelScope.launch {
+                    _navigationSharedFlow.emit(NavigateToLogin())
+                }
+            }
         }
     }
 
-    fun onContinueHandled(data: CheckEmailResponse) {
-        viewModelScope.launch {
-            _onNavigateToResetPassword.emit(data)
-        }
-    }
 
-    fun onDismissErrorAlertDialog() {
-        _state.update {
-            it.copy(loading = false, errorDialogShowStatus = false, message = "")
-        }
-    }
-
-    fun onTapContinueHandled() {
-        _state.update { it.copy(checkEmailResponse = null) }
-    }
 }

@@ -7,10 +7,14 @@ data class CartState(
     val foodItemList: List<FoodItemVO> = listOf(),
     val loading: Boolean = false,
     val message: String = "",
-    val successStatus: Boolean = false,
-    val errorDialogShowStatus: Boolean = false,
+
+    val loginStatus: Boolean = false,
+
+
+
     val showRemoveItemDialog: Boolean = false,
     val removeItem: FoodItemVO? = null,
-    val showDeliveryPaymentDialog: Boolean?= null,
+
+    val showDeliveryPaymentDialog: Boolean = false,
     val deliveryAddressAndPaymentListVO: DeliveryAddressAndPaymentListVO? = null
 )
