@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.ttm.foodorderingappcmp.core.network.FoodOrderingErrorEnums
+import org.ttm.foodorderingappcmp.core.utils.apiToken
 import org.ttm.foodorderingappcmp.core.utils.emailRegex
 import org.ttm.foodorderingappcmp.features.forgot_password.actions.ForgotPasswordActions
 import org.ttm.foodorderingappcmp.features.forgot_password.data.repository.ForgotPasswordRepository
@@ -57,13 +58,12 @@ class ForgotPasswordViewModel: ViewModel() {
 
             forgotPasswordRepository.forgotPasswordCheckEmail(email =  _state.value.email,
                 onSuccess = { checkEmailResponse ->
-
+                    apiToken = checkEmailResponse.resetPasswordToken
                     _state.update {
                         it.copy(
                             checkEmailResponse = checkEmailResponse,
                             loading = false,
                             message = "",
-                            //errorDialogShowStatus = false
                         )
                     }
                     onContinueHandled(checkEmailResponse.user.email)
@@ -104,18 +104,6 @@ class ForgotPasswordViewModel: ViewModel() {
             _navigationSharedFlow.emit(NavigateToResetPassword(data))
         }
     }
-//
-//    fun onDismissErrorAlertDialog() {
-//        _state.update {
-//            it.copy(loading = false,
-//                message = "")
-//        }
-//    }
-//
-//    fun onTapContinueHandled() {
-//        _state.update { it.copy(checkEmailResponse = null) }
-//    }
-
 
     fun onAction(action: ForgotPasswordActions){
         when(action){

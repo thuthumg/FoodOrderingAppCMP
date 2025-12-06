@@ -11,9 +11,10 @@ import kotlinx.coroutines.launch
 import org.ttm.foodorderingappcmp.auth.actions.LoginActions
 import org.ttm.foodorderingappcmp.auth.data.repository.LoginRegisterRepository
 import org.ttm.foodorderingappcmp.auth.events.LoginEvents
-import org.ttm.foodorderingappcmp.auth.events.LoginEvents.*
+import org.ttm.foodorderingappcmp.auth.events.LoginEvents.NavigateToForgotPassword
+import org.ttm.foodorderingappcmp.auth.events.LoginEvents.NavigateToHome
+import org.ttm.foodorderingappcmp.auth.events.LoginEvents.NavigateToSignUp
 import org.ttm.foodorderingappcmp.auth.ui.state.LoginState
-import org.ttm.foodorderingappcmp.core.network.FoodOrderingResult
 import org.ttm.foodorderingappcmp.core.utils.apiToken
 import org.ttm.foodorderingappcmp.core.utils.emailRegex
 

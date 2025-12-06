@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import org.ttm.foodorderingappcmp.core.network.FoodOrderingErrorEnums
-import org.ttm.foodorderingappcmp.core.network.FoodOrderingResult
 import org.ttm.foodorderingappcmp.core.network.onError
 import org.ttm.foodorderingappcmp.core.network.onSuccess
 import org.ttm.foodorderingappcmp.features.restaurants.data.repository.RestaurantRepository

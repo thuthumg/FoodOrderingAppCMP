@@ -4,13 +4,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import org.ttm.foodorderingappcmp.core.network.FoodOrderingErrorEnums
-import org.ttm.foodorderingappcmp.core.network.FoodOrderingResult
 import org.ttm.foodorderingappcmp.core.network.onError
 import org.ttm.foodorderingappcmp.core.network.onSuccess
 import org.ttm.foodorderingappcmp.core.persistence.AppDatabaseProvider
+import org.ttm.foodorderingappcmp.features.orders.data.vos.DeliveryAddressAndPaymentVO
 import org.ttm.foodorderingappcmp.features.orders.network.api_service.OrderApiService
 import org.ttm.foodorderingappcmp.features.orders.network.impl.OrderApiServiceImpl
-import org.ttm.foodorderingappcmp.features.orders.data.vos.DeliveryAddressAndPaymentVO
 
 object CheckoutRepository {
 

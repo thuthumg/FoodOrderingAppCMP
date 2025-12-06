@@ -4,9 +4,8 @@ import org.ttm.foodorderingappcmp.core.network.FoodOrderingError
 import org.ttm.foodorderingappcmp.core.network.FoodOrderingResult
 import org.ttm.foodorderingappcmp.features.orders.data.vos.DeliveryAddressAndPaymentListVO
 import org.ttm.foodorderingappcmp.features.orders.data.vos.DeliveryAddressAndPaymentVO
-import org.ttm.foodorderingappcmp.features.orders.network.request.SubmitOrderRequest
 import org.ttm.foodorderingappcmp.features.orders.data.vos.OrderItemVO
-import org.ttm.foodorderingappcmp.features.restaurants.data.vos.RestaurantVO
+import org.ttm.foodorderingappcmp.features.orders.network.request.SubmitOrderRequest
 
 interface OrderApiService {
 

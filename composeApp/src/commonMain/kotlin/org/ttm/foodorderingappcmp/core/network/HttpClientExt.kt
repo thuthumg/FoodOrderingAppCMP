@@ -3,7 +3,6 @@ package org.ttm.foodorderingappcmp.core.network
 import io.ktor.client.call.body
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
-import io.ktor.serialization.JsonConvertException
 import kotlinx.io.IOException
 import kotlinx.serialization.SerializationException
 

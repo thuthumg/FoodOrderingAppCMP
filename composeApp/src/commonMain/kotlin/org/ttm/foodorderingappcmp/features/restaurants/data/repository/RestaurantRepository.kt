@@ -34,17 +34,10 @@ object RestaurantRepository {
 
 
     suspend fun getRestaurantDetails(restaurantId: Long,
-                                   //  onSuccess: (RestaurantVO) -> Unit,
-                                  //   onFailure: (String, FoodOrderingErrorEnums?) -> Unit
     ):FoodOrderingResult<RestaurantVO, FoodOrderingError> =
         withContext(Dispatchers.IO) {
             restaurantApiService.getRestaurantDetails(restaurantId)
-//                .onSuccess {
-//                    onSuccess(it)
-//                }
-//                .onError { error ->
-//                    onFailure(error.error,error.errorType)
-//                }
+
 
         }
 

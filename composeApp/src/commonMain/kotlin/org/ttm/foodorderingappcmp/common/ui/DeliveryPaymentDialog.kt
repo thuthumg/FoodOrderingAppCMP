@@ -67,19 +67,6 @@ fun DeliveryPaymentDialog(
     onTapConfirm: (DeliveryAddressVO, PaymentVO) -> Unit,
     onTapBack: () -> Unit
 ) {
-//    val firstAddress = remember(deliveryAddressAndPaymentListVO?.deliveryAddresses) {
-//        deliveryAddressAndPaymentListVO?.deliveryAddresses?.firstOrNull()?.streetAddress
-//    }
-//    var chosenDeliveryAddress by remember(deliveryAddressAndPaymentListVO?.deliveryAddresses) {
-//        mutableStateOf(firstAddress)
-//    }
-//
-//    val firstPayment = remember(deliveryAddressAndPaymentListVO?.paymentMethods) {
-//        deliveryAddressAndPaymentListVO?.paymentMethods?.firstOrNull()?.cardNumber
-//    }
-//    var chosenPaymentMethod by remember(deliveryAddressAndPaymentListVO?.paymentMethods) {
-//        mutableStateOf(firstPayment)
-//    }
 
     var chosenDeliveryAddress by remember { mutableStateOf<String?>( "") }
     var chosenPaymentMethod by remember { mutableStateOf<String?>("") }

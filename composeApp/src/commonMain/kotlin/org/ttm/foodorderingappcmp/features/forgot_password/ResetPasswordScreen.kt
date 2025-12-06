@@ -12,9 +12,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -41,7 +38,6 @@ import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_2X
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_3X
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
-import org.ttm.foodorderingappcmp.features.forgot_password.actions.ForgotPasswordActions
 import org.ttm.foodorderingappcmp.features.forgot_password.actions.ResetPasswordActions
 import org.ttm.foodorderingappcmp.features.forgot_password.events.ResetPasswordEvents
 import org.ttm.foodorderingappcmp.features.forgot_password.ui.state.ResetPasswordState
@@ -75,36 +71,13 @@ fun ResetPasswordRoute(resetPasswordViewModel: ResetPasswordViewModel,
         onAction = {
             resetPasswordViewModel.onAction(it)
         },
-//        onTapBack = {
-//            onTapBack()
-//        },
-//        onTapResetPassword = { password,confirmPassword ->
-//            resetPasswordViewModel.forgotPassword(password,confirmPassword)
-//        },
-//        onDismissErrorAlertDialog = {
-//            resetPasswordViewModel.onDismissErrorAlertDialog()
-//        },
-//        onDismissSuccessAlertDialog = {
-//            resetPasswordViewModel.onDismissSuccessAlertDialog()
-//        },
-//        onNavigateToLogin = onNavigateToLogin
     )
 }
 @Composable
 fun ResetPasswordScreen(
     resetPasswordState: ResetPasswordState,
     onAction: (ResetPasswordActions) -> Unit,
-//    onTapBack: () -> Unit,
-//    onTapResetPassword: (String, String) -> Unit,
-//    onDismissErrorAlertDialog: ()-> Unit,
-//    onDismissSuccessAlertDialog: () -> Unit,
-//    onNavigateToLogin: () -> Unit
     ) {
-
-   // var password by remember { mutableStateOf("") }
-   // var confirmPassword by remember { mutableStateOf("") }
-
-
 
     /************* Loading State *********************/
     if (resetPasswordState.loading) {

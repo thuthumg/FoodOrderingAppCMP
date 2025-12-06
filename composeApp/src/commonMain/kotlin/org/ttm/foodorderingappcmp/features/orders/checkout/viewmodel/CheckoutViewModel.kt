@@ -118,13 +118,6 @@ class CheckoutViewModel : ViewModel() {
 
         }
     }
-//
-//    fun onDismissErrorAlertDialog() {
-//        _state.update {
-//            it.copy(loading = false,  message = "")
-//        }
-//    }
-
 
     fun isValidCardNumber(cardNumber: String): Boolean {
         val sanitized = cardNumber.replace(" ", "")

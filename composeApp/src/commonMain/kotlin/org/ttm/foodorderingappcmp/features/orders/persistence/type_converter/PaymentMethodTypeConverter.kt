@@ -2,7 +2,6 @@ package org.ttm.foodorderingappcmp.features.orders.persistence.type_converter
 
 import androidx.room.TypeConverter
 import org.ttm.foodorderingappcmp.core.utils.universalJsonParser
-import org.ttm.foodorderingappcmp.features.orders.data.vos.DeliveryAddressVO
 import org.ttm.foodorderingappcmp.features.orders.data.vos.PaymentVO
 
 class PaymentMethodTypeConverter {

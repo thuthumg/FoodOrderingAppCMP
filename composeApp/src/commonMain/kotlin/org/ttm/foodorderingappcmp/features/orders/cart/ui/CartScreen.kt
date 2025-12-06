@@ -57,10 +57,7 @@ import org.ttm.foodorderingappcmp.features.orders.cart.actions.CartActions
 import org.ttm.foodorderingappcmp.features.orders.cart.events.CartEvents
 import org.ttm.foodorderingappcmp.features.orders.cart.state.CartState
 import org.ttm.foodorderingappcmp.features.orders.cart.viewmodel.CartViewModel
-import org.ttm.foodorderingappcmp.features.orders.data.vos.DeliveryAddressVO
-import org.ttm.foodorderingappcmp.features.orders.data.vos.PaymentVO
 import org.ttm.foodorderingappcmp.features.restaurants.data.vos.FoodItemVO
-import org.ttm.foodorderingappcmp.features.restaurants.detail.actions.DetailActions
 
 @Composable
 fun CartRoute(

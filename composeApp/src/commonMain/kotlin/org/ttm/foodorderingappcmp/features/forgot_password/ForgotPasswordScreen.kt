@@ -12,9 +12,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -41,7 +38,6 @@ import org.ttm.foodorderingappcmp.core.SCREEN_BG_COLOR
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_2X
 import org.ttm.foodorderingappcmp.core.TEXT_REGULAR_3X
 import org.ttm.foodorderingappcmp.core.TITLE_BLACK_COLOR
-import org.ttm.foodorderingappcmp.core.utils.apiToken
 import org.ttm.foodorderingappcmp.features.forgot_password.actions.ForgotPasswordActions
 import org.ttm.foodorderingappcmp.features.forgot_password.events.ForgotPasswordEvents
 import org.ttm.foodorderingappcmp.features.forgot_password.ui.state.ForgotPasswordState
@@ -70,10 +66,7 @@ fun ForgotPasswordRoute(forgotPasswordViewModel: ForgotPasswordViewModel,
                 }
             }
         }
-//        forgotPasswordViewModel.onNavigateToResetPassword.collect { checkEmailResponse ->
-//            apiToken = checkEmailResponse.resetPasswordToken
-//            onNavigateToResetPassword(checkEmailResponse.user.email)
-//        }
+
     }
 
 
@@ -82,30 +75,13 @@ fun ForgotPasswordRoute(forgotPasswordViewModel: ForgotPasswordViewModel,
         onAction = {
             forgotPasswordViewModel.onAction(it)
         },
-//        onTapBack = {
-//            onTapBack()
-//        },
-//        onTapContinue = { email ->
-//           forgotPasswordViewModel.checkEmail(email)
-//        },
-//        onDismissErrorAlertDialog = {
-//            forgotPasswordViewModel.onDismissErrorAlertDialog()
-//        },
-//        onNavigateToResetPassword = { email->
-//            onNavigateToResetPassword(email)
-//            forgotPasswordViewModel.onTapContinueHandled()
-//
-//        }
     )
 }
 @Composable
 fun ForgotPasswordScreen(forgotPasswordState: ForgotPasswordState,
                          onAction: (ForgotPasswordActions) -> Unit
-                        // onTapBack: () -> Unit,
-                        // onTapContinue: (String)-> Unit,
-                        // onDismissErrorAlertDialog: () -> Unit
 ) {
-   // var email by remember{ mutableStateOf("") }
+
 
     /************* Loading State *********************/
     if (forgotPasswordState.loading) {
@@ -132,14 +108,6 @@ fun ForgotPasswordScreen(forgotPasswordState: ForgotPasswordState,
             }
         )
     }
-    /************* API Call Success State *********************/
-
-//    LaunchedEffect(forgotPasswordState.checkEmailResponse){
-//        forgotPasswordState.checkEmailResponse?.let {
-//            apiToken = it.resetPasswordToken
-//            onNavigateToResetPassword(it.user.email)
-//        }
-//    }
 
 
     /************* Forgot Password Screen *********************/

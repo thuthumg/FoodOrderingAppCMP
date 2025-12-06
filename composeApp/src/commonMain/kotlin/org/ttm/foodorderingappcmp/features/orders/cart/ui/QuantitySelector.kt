@@ -28,12 +28,7 @@ fun QuantitySelector(
         horizontalArrangement = Arrangement.spacedBy(MARGIN_MEDIUM)
     ) {
 
-//        DecreaseItemQuantityButton(
-//            itemQty = itemQty,
-//            onDecrease = { it ->
-//                onClickQtyAction(it)
-//            }
-//        )
+
         QuantityAdjustButton(
             modifier = Modifier.size(32.dp),
             type = QtyActionType.Decrease,
@@ -57,14 +52,6 @@ fun QuantitySelector(
         )
 
 
-//
-//        IncreaseItemQuantityButton(
-//            itemQty = itemQty,
-//            onIncrease = {
-//                it ->
-//                onClickQtyAction(it)
-//            }
-//        )
     }
 }
 

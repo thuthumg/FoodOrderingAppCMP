@@ -10,7 +10,6 @@ import org.ttm.foodorderingappcmp.core.network.FoodOrderingError
 import org.ttm.foodorderingappcmp.core.network.FoodOrderingResult
 import org.ttm.foodorderingappcmp.core.network.HttpClientProvider
 import org.ttm.foodorderingappcmp.core.network.safeApiCall
-import org.ttm.foodorderingappcmp.core.network.transformResult
 import org.ttm.foodorderingappcmp.core.utils.LOGIN
 import org.ttm.foodorderingappcmp.core.utils.REGISTER
 
@@ -24,7 +23,6 @@ object LoginRegisterServiceImpl: LoginRegisterService {
                 setBody(LoginRequest(email = email, password = password))
             }
         }
-       // return transformResult<LoginRegisterResponse?>(httpResponse)
 
     }
 

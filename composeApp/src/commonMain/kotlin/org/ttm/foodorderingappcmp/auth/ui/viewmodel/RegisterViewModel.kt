@@ -10,10 +10,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.ttm.foodorderingappcmp.auth.actions.RegisterActions
 import org.ttm.foodorderingappcmp.auth.data.repository.LoginRegisterRepository
-import org.ttm.foodorderingappcmp.auth.events.LoginEvents.NavigateToHome
 import org.ttm.foodorderingappcmp.auth.events.RegisterEvents
 import org.ttm.foodorderingappcmp.auth.ui.state.RegisterState
-import org.ttm.foodorderingappcmp.core.network.FoodOrderingResult
 import org.ttm.foodorderingappcmp.core.utils.apiToken
 import org.ttm.foodorderingappcmp.core.utils.emailRegex
 

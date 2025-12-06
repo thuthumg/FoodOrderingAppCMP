@@ -9,16 +9,19 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.ttm.foodorderingappcmp.core.network.FoodOrderingErrorEnums
-import org.ttm.foodorderingappcmp.core.network.FoodOrderingResult
 import org.ttm.foodorderingappcmp.features.orders.cart.actions.CartActions
 import org.ttm.foodorderingappcmp.features.orders.cart.events.CartEvents
-import org.ttm.foodorderingappcmp.features.orders.cart.events.CartEvents.*
+import org.ttm.foodorderingappcmp.features.orders.cart.events.CartEvents.OnNavigateToCheckOut
+import org.ttm.foodorderingappcmp.features.orders.cart.events.CartEvents.OnNavigateToDetail
+import org.ttm.foodorderingappcmp.features.orders.cart.events.CartEvents.OnNavigateToHome
+import org.ttm.foodorderingappcmp.features.orders.cart.events.CartEvents.OnNavigateToLogin
+import org.ttm.foodorderingappcmp.features.orders.cart.events.CartEvents.OnNavigateToReviewOrder
 import org.ttm.foodorderingappcmp.features.orders.cart.state.CartState
 import org.ttm.foodorderingappcmp.features.orders.data.repository.CartRepository
 import org.ttm.foodorderingappcmp.features.orders.data.repository.CheckoutRepository
+import org.ttm.foodorderingappcmp.features.orders.data.vos.DeliveryAddressAndPaymentVO
 import org.ttm.foodorderingappcmp.features.orders.data.vos.DeliveryAddressVO
 import org.ttm.foodorderingappcmp.features.orders.data.vos.PaymentVO
-import org.ttm.foodorderingappcmp.features.orders.data.vos.DeliveryAddressAndPaymentVO
 import org.ttm.foodorderingappcmp.features.restaurants.data.vos.FoodItemVO
 
 class CartViewModel : ViewModel() {
@@ -58,41 +61,6 @@ class CartViewModel : ViewModel() {
                 }
             }
 
-//            when (val result = cartRepository.getAllCartFromDbFlow()) {
-//                is FoodOrderingResult.Failure -> {
-//                    if (result.message == "Unauthorized (401)") {
-//                        _state.update {
-//                            it.copy(
-//                                loading = false,
-//                                message = result.message,
-//                                loginStatus = true
-//                            )
-//                        }
-//                    } else {
-//                        _state.update {
-//                            it.copy(
-//                                loading = false,
-//                                message = result.message,
-//                                loginStatus = false
-//                            )
-//                        }
-//                    }
-//                }
-//
-//                is FoodOrderingResult.Success -> {
-//                    result.data.collect { cardList ->
-//                        _state.update {
-//                            it.copy(
-//                                foodItemList = cardList ?: listOf(),
-//                                loading = false,
-//                                message = "",
-//                                loginStatus = false
-//                            )
-//                        }
-//                    }
-//
-//                }
-//            }
         }
     }
 

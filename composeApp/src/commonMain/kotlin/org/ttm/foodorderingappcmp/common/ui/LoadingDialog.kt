@@ -21,11 +21,6 @@ import org.ttm.foodorderingappcmp.core.MARGIN_XLARGE
 fun LoadingDialog(
     onDismissRequest : () -> Unit,
 ){
-//    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.yoma_loading))
-//    val progress by animateLottieCompositionAsState(
-//        composition = composition,
-//        iterations = LottieConstants.IterateForever // loop forever
-//    )
 
     BasicAlertDialog(
         onDismissRequest = onDismissRequest,
@@ -42,12 +37,7 @@ fun LoadingDialog(
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier.size(65.dp).background(color = Color.Transparent)){
-//            LottieAnimation(
-//                composition = composition,
-//                progress = { progress },
-//                modifier = Modifier
-//                    .align(Alignment.Center)
-//            )
+
             CircularProgressIndicator()
         }
 

@@ -36,12 +36,6 @@ fun QuantityAdjustButton(
         is QtyActionType.AddToCart -> painterResource(Res.drawable.ic_add)
     }
 
-//val clickAction = when (type) {
-//    is QtyActionType.Increase -> onIncrease
-//    is QtyActionType.Decrease -> onDecrease
-//    is QtyActionType.AddToCart -> onAddToCart
-//}
-
     Box(
         modifier = modifier
             .background(color = Color.White, shape = CircleShape)

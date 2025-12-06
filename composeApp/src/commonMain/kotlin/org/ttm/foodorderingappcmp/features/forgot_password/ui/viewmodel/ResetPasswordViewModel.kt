@@ -9,11 +9,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.ttm.foodorderingappcmp.core.network.FoodOrderingErrorEnums
+import org.ttm.foodorderingappcmp.core.utils.apiToken
 import org.ttm.foodorderingappcmp.features.forgot_password.actions.ResetPasswordActions
 import org.ttm.foodorderingappcmp.features.forgot_password.data.repository.ForgotPasswordRepository
-import org.ttm.foodorderingappcmp.features.forgot_password.events.ForgotPasswordEvents
 import org.ttm.foodorderingappcmp.features.forgot_password.events.ResetPasswordEvents
-import org.ttm.foodorderingappcmp.features.forgot_password.events.ResetPasswordEvents.*
+import org.ttm.foodorderingappcmp.features.forgot_password.events.ResetPasswordEvents.NavigateToForgotPassword
+import org.ttm.foodorderingappcmp.features.forgot_password.events.ResetPasswordEvents.NavigateToLogin
 import org.ttm.foodorderingappcmp.features.forgot_password.ui.state.ResetPasswordState
 
 class ResetPasswordViewModel(val email: String): ViewModel(){
@@ -43,7 +44,6 @@ val resetPasswordState = _state.asStateFlow()
             it.copy(
                 loading = false,
                 message = errorMessage,
-               // errorDialogShowStatus = true,
             )
         }
         return
@@ -53,7 +53,6 @@ val resetPasswordState = _state.asStateFlow()
 
     viewModelScope.launch {
         _state.update { it.copy(loading = true,
-           // errorDialogShowStatus = false,
             message = "") }
 
         forgotPasswordRepository.forgotPassword(
@@ -66,8 +65,6 @@ val resetPasswordState = _state.asStateFlow()
                         message = "Password reset successful. Please log in with your new password.",
                         showSuccessDialog = true,
                         loginStatus = false
-                       // resetPasswordStatus = true,
-                       // errorDialogShowStatus = false
                     )
                 }
             },
@@ -81,8 +78,6 @@ val resetPasswordState = _state.asStateFlow()
                                 message = message,
                                 loginStatus = true,
                                 showSuccessDialog = false
-                               // resetPasswordStatus = false,
-                               // errorDialogShowStatus = true
                             )
                         }
                     }
@@ -93,8 +88,6 @@ val resetPasswordState = _state.asStateFlow()
                                 message = message,
                                 loginStatus = false,
                                 showSuccessDialog = false
-                               // resetPasswordStatus = false,
-                               // errorDialogShowStatus = true
                             )
                         }
                     }
@@ -105,22 +98,6 @@ val resetPasswordState = _state.asStateFlow()
     }
 }
 
-//
-//fun onDismissErrorAlertDialog() {
-//    _state.update {
-//        it.copy(loading = false, errorDialogShowStatus = false, message = "")
-//    }
-//}
-
-//fun onDismissSuccessAlertDialog() {
-//        _state.update {
-//            it.copy(loading = false,
-//                errorDialogShowStatus = false,
-//                resetPasswordStatus = false,
-//                goToLoginStatus = true,
-//                message = "")
-//        }
-//    }
 
     fun onAction(resetPasswordActions: ResetPasswordActions){
         when(resetPasswordActions){
@@ -151,16 +128,7 @@ val resetPasswordState = _state.asStateFlow()
             }
             is ResetPasswordActions.OnTapResetPassword -> {
                 forgotPassword()
-//                _state.update {
-//                    it.copy(
-//                        loading = false,
-//                        message = "",
-//                        loginStatus = false,
-//                        showSuccessDialog = true
-//                        // resetPasswordStatus = false,
-//                        // errorDialogShowStatus = true
-//                    )
-//                }
+
             }
 
             is ResetPasswordActions.OnErrorDialogDismissed -> {

@@ -2,14 +2,12 @@ package org.ttm.foodorderingappcmp.auth.data.repository
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.ttm.foodorderingappcmp.auth.data.vos.LoginRegisterVO
 import org.ttm.foodorderingappcmp.auth.network.api_service.LoginRegisterService
 import org.ttm.foodorderingappcmp.auth.network.impls.LoginRegisterServiceImpl
 import org.ttm.foodorderingappcmp.auth.network.responses.toVO
 import org.ttm.foodorderingappcmp.core.network.FoodOrderingErrorEnums
-import org.ttm.foodorderingappcmp.core.network.FoodOrderingResult
 import org.ttm.foodorderingappcmp.core.network.onError
 import org.ttm.foodorderingappcmp.core.network.onSuccess
 import org.ttm.foodorderingappcmp.core.persistence.AppDatabaseProvider

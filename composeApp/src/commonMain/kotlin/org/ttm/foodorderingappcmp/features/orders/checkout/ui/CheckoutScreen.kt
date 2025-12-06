@@ -27,7 +27,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import foodorderingappcmp.composeapp.generated.resources.Res
 import foodorderingappcmp.composeapp.generated.resources.card_number
 import foodorderingappcmp.composeapp.generated.resources.checkout
@@ -95,11 +94,6 @@ fun CheckoutScreen(
 
 ) {
 
-   // var cardNumber by remember { mutableStateOf("") }
-  //  var mm_yy by remember { mutableStateOf("") }
-  //  var cvv by remember { mutableStateOf("") }
-  //  var nameOnCard by remember { mutableStateOf("") }
-  //  var fullAddress by remember { mutableStateOf("") }
     var saveForFutureUse by remember { mutableStateOf(false) }
 
 
@@ -110,13 +104,6 @@ fun CheckoutScreen(
         )
     }
 
-
-    /*************API Call Success State*********************/
-//    if(state.checkoutApiStatus){
-//        state.deliveryAddressAndPaymentVO?.let {
-//            onNavigateToOrderReview()
-//        }
-//    }
 
 
         /*************API Call Error State*********************/

@@ -54,7 +54,6 @@ import org.ttm.foodorderingappcmp.features.orders.order_review.actions.OrderRevi
 import org.ttm.foodorderingappcmp.features.orders.order_review.events.OrderReviewEvents
 import org.ttm.foodorderingappcmp.features.orders.order_review.state.OrderReviewState
 import org.ttm.foodorderingappcmp.features.orders.order_review.viewmodel.OrderReviewViewModel
-import org.ttm.foodorderingappcmp.features.restaurants.data.vos.FoodItemVO
 
 @Composable
 fun OrderReviewRoute(viewModel: OrderReviewViewModel,
@@ -79,17 +78,7 @@ fun OrderReviewRoute(viewModel: OrderReviewViewModel,
         onActions = {
             viewModel.onAction(it)
         }
-//        onTapBack = onTapBack,
-//        onTapConfirmOrder = { paymentId, deliveryAddressId, foodItemList ->
-//            viewModel.submitOrder(paymentId,deliveryAddressId,foodItemList)
-//        },
-//        onDismissErrorAlertDialog = {
-//            viewModel.onDismissErrorAlertDialog()
-//        },
-       // onNavigateToOrderConfirmation = onNavigateToOrderConfirmation,
-//       onNavigateToOrderConfirmation onOrderSubmitHandled = {
-//            viewModel.onOrderSubmitHandled()
-//        }
+
     )
 
 }
@@ -97,9 +86,6 @@ fun OrderReviewRoute(viewModel: OrderReviewViewModel,
 fun OrderReviewScreen(
     orderReviewState: OrderReviewState,
     onActions: (OrderReviewActions) -> Unit
-//    onTapBack: () -> Unit,
-//    onTapConfirmOrder: (Long, Long,  List<FoodItemVO>) -> Unit,
-//    onDismissErrorAlertDialog: () -> Unit,
 
 ) {
 
@@ -123,14 +109,6 @@ fun OrderReviewScreen(
             }
         )
     }
-    /************* API Call Success State *********************/
-
-//    LaunchedEffect(orderReviewState.orderSubmitStatus) {
-//        if (orderReviewState.orderSubmitStatus) {
-//            onNavigateToOrderConfirmation()
-//            onOrderSubmitHandled()
-//        }
-//    }
 
     /********************** Order Review Screen *******************************/
     Scaffold(
